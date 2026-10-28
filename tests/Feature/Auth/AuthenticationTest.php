@@ -24,6 +24,18 @@ test('users can authenticate using the login screen', function () {
     $response->assertRedirect(route('dashboard'));
 });
 
+test('blocked users can not authenticate', function () {
+    $user = User::factory()->blocked()->create();
+
+    $response = $this->post(route('login.store'), [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $this->assertGuest();
+    $response->assertSessionHasErrors(['email' => 'Sua conta foi bloqueada. Entre em contato com um administrador.']);
+});
+
 test('passkey login response redirects to the dashboard', function () {
     $user = User::factory()->create();
 

@@ -1,5 +1,8 @@
 <?php
 
+use App\Enums\UserRole;
+use App\Models\User;
+
 test('registration screen can be rendered', function () {
     $response = $this->get(route('register'));
 
@@ -15,6 +18,7 @@ test('new users can register', function () {
     ]);
 
     $this->assertAuthenticated();
+    expect(User::query()->where('email', 'test@example.com')->sole()->role)->toBe(UserRole::Student);
 
     $response->assertRedirect(route('dashboard'));
 });

@@ -18,17 +18,16 @@ const code = ref<string>('');
 const authConfigContent = computed<TwoFactorConfigContent>(() => {
     if (showRecoveryInput.value) {
         return {
-            title: 'Recovery code',
+            title: 'Código de recuperação',
             description:
-                'Please confirm access to your account by entering one of your emergency recovery codes.',
+                'Confirme o acesso à sua conta digitando um dos seus códigos de recuperação.',
             buttonText: 'login using an authentication code',
         };
     }
 
     return {
-        title: 'Authentication code',
-        description:
-            'Enter the authentication code provided by your authenticator application.',
+        title: 'Código de autenticação',
+        description: 'Digite o código gerado pelo seu aplicativo autenticador.',
         buttonText: 'login using a recovery code',
     };
 });
@@ -48,7 +47,7 @@ const toggleRecoveryMode = (clearErrors: () => void): void => {
 </script>
 
 <template>
-    <Head title="Two-factor authentication" />
+    <Head title="Autenticação em dois fatores" />
 
     <div class="space-y-6">
         <template v-if="!showRecoveryInput">
@@ -83,7 +82,7 @@ const toggleRecoveryMode = (clearErrors: () => void): void => {
                     <InputError :message="errors.code" />
                 </div>
                 <Button type="submit" class="w-full" :disabled="processing"
-                    >Continue</Button
+                    >Continuar</Button
                 >
                 <div class="text-center text-sm text-muted-foreground">
                     <span>or you can </span>
@@ -108,13 +107,13 @@ const toggleRecoveryMode = (clearErrors: () => void): void => {
                 <Input
                     name="recovery_code"
                     type="text"
-                    placeholder="Enter recovery code"
+                    placeholder="Digite o código de recuperação"
                     v-focus
                     required
                 />
                 <InputError :message="errors.recovery_code" />
                 <Button type="submit" class="w-full" :disabled="processing"
-                    >Continue</Button
+                    >Continuar</Button
                 >
 
                 <div class="text-center text-sm text-muted-foreground">
