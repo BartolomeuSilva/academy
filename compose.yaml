@@ -1,0 +1,126 @@
+# Ambiente local. Serviços de apoio sobem sempre; o perfil "prod" sobe a imagem
+# de produção (app, horizon, video-worker, scheduler) para testes de fumaça antes do deploy.
+#
+#   docker compose up -d                  # Postgres, Redis, S3 (RustFS), Mailpit
+#   docker compose --profile prod up -d   # + imagem de produção em http://localhost:8080
+
+name: academy
+
+x-app: &app
+    build:
+        context: .
+        target: app
+    image: academy:local
+    env_file: .env
+    environment: &app-env
+        APP_ENV: local
+        DB_HOST: pgsql
+        DB_PORT: 5432
+        REDIS_HOST: redis
+        REDIS_PORT: 6379
+        AWS_ENDPOINT: http://s3:9000
+        MAIL_HOST: mailpit
+        MAIL_PORT: 1025
+    depends_on:
+        pgsql: { condition: service_healthy }
+        redis: { condition: service_healthy }
+    profiles: [prod]
+
+services:
+    pgsql:
+        image: postgres:17-alpine
+        environment:
+            POSTGRES_DB: academy
+            POSTGRES_USER: academy
+            POSTGRES_PASSWORD: secret
+        ports:
+            - '${FORWARD_DB_PORT:-54320}:5432'
+        volumes:
+            - pgsql-data:/var/lib/postgresql/data
+            - ./docker/pgsql/create-testing-database.sql:/docker-entrypoint-initdb.d/10-create-testing-database.sql:ro
+        healthcheck:
+            test: ['CMD', 'pg_isready', '-q', '-d', 'academy', '-U', 'academy']
+            interval: 5s
+            retries: 10
+
+    redis:
+        image: redis:7-alpine
+        command: ['redis-server', '--appendonly', 'yes']
+        ports:
+            - '${FORWARD_REDIS_PORT:-63790}:6379'
+        volumes:
+            - redis-data:/data
+        healthcheck:
+            test: ['CMD', 'redis-cli', 'ping']
+            interval: 5s
+            retries: 10
+
+    s3:
+        image: rustfs/rustfs:1.0.3
+        environment:
+            RUSTFS_ACCESS_KEY: academy
+            RUSTFS_SECRET_KEY: academy-secret
+            RUSTFS_CONSOLE_ENABLE: 'true'
+        ports:
+            - '${FORWARD_S3_PORT:-9000}:9000'
+            - '${FORWARD_S3_CONSOLE_PORT:-9001}:9001'
+        volumes:
+            - s3-data:/data
+
+    s3-init:
+        image: amazon/aws-cli:2.31.0
+        depends_on: [s3]
+        environment:
+            AWS_ACCESS_KEY_ID: academy
+            AWS_SECRET_ACCESS_KEY: academy-secret
+            AWS_DEFAULT_REGION: us-east-1
+        entrypoint: ['/bin/sh', '-c']
+        command:
+            - |
+                for i in $$(seq 1 30); do aws --endpoint-url http://s3:9000 s3api list-buckets >/dev/null 2>&1 && break; sleep 1; done
+                aws --endpoint-url http://s3:9000 s3api head-bucket --bucket academy 2>/dev/null \
+                  || aws --endpoint-url http://s3:9000 s3api create-bucket --bucket academy
+        restart: 'no'
+
+    mailpit:
+        image: axllent/mailpit:v1.27
+        ports:
+            - '${FORWARD_MAILPIT_PORT:-11025}:1025'
+            - '${FORWARD_MAILPIT_DASHBOARD_PORT:-18025}:8025'
+
+    app:
+        <<: *app
+        environment:
+            <<: *app-env
+            AUTORUN_ENABLED: 'true'
+            AUTORUN_LARAVEL_MIGRATION_ISOLATION: 'true'
+        ports:
+            - '${FORWARD_APP_PORT:-8080}:8080'
+
+    horizon:
+        <<: *app
+        command: ['php', '/var/www/html/artisan', 'horizon']
+        healthcheck:
+            test: ['CMD', 'healthcheck-horizon']
+            start_period: 10s
+
+    scheduler:
+        <<: *app
+        command: ['php', '/var/www/html/artisan', 'schedule:work']
+        healthcheck:
+            test: ['CMD', 'healthcheck-schedule']
+            start_period: 10s
+
+    video-worker:
+        <<: *app
+        build:
+            context: .
+            target: video-worker
+        image: academy-video-worker:local
+        healthcheck:
+            disable: true
+
+volumes:
+    pgsql-data:
+    redis-data:
+    s3-data:

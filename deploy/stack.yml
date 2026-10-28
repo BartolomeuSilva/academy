@@ -1,0 +1,192 @@
+# Stack de produção do Academy (Docker Swarm).
+# Implantado por deploy/deploy.sh, que carrega /opt/academy/academy.env antes do "docker stack deploy".
+
+x-app-env: &app-env
+    APP_NAME: Academy
+    APP_ENV: production
+    APP_DEBUG: 'false'
+    APP_URL: https://academy.sempertechnology.com.br
+    APP_LOCALE: pt_BR
+    APP_FALLBACK_LOCALE: en
+    APP_KEY_FILE: /run/secrets/academy_app_key
+    LOG_CHANNEL: stderr
+    LOG_LEVEL: warning
+    DB_CONNECTION: pgsql
+    DB_HOST: postgres
+    DB_PORT: 5432
+    DB_DATABASE: academy
+    DB_USERNAME: academy
+    DB_PASSWORD_FILE: /run/secrets/academy_db_password
+    REDIS_CLIENT: phpredis
+    REDIS_HOST: redis
+    REDIS_PORT: 6379
+    REDIS_PASSWORD_FILE: /run/secrets/academy_redis_password
+    CACHE_STORE: redis
+    SESSION_DRIVER: redis
+    SESSION_SECURE_COOKIE: 'true'
+    QUEUE_CONNECTION: redis
+    FILESYSTEM_DISK: s3
+    AWS_ACCESS_KEY_ID_FILE: /run/secrets/academy_s3_key
+    AWS_SECRET_ACCESS_KEY_FILE: /run/secrets/academy_s3_secret
+    AWS_DEFAULT_REGION: us-east-1
+    AWS_BUCKET: academy
+    AWS_ENDPOINT: https://storage.ichatbot.com.br
+    AWS_USE_PATH_STYLE_ENDPOINT: 'true'
+    MAIL_MAILER: smtp
+    MAIL_HOST: mail.g5d.com.br
+    MAIL_PORT: ${MAIL_PORT:?defina MAIL_PORT em academy.env}
+    MAIL_SCHEME: ${MAIL_SCHEME:-smtps}
+    MAIL_USERNAME: ${MAIL_USERNAME:?defina MAIL_USERNAME em academy.env}
+    MAIL_PASSWORD_FILE: /run/secrets/academy_mail_password
+    MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:?defina MAIL_FROM_ADDRESS em academy.env}
+    MAIL_FROM_NAME: Academy
+
+x-app-secrets: &app-secrets
+    - academy_app_key
+    - academy_db_password
+    - academy_redis_password
+    - academy_s3_key
+    - academy_s3_secret
+    - academy_mail_password
+
+x-app-base: &app-base
+    image: ghcr.io/bartolomeusilva/academy:${IMAGE_TAG:?defina IMAGE_TAG}
+    environment: *app-env
+    secrets: *app-secrets
+    networks: [internal]
+
+x-update: &rolling-update
+    parallelism: 1
+    order: start-first
+    failure_action: rollback
+    monitor: 30s
+
+services:
+    app:
+        <<: *app-base
+        environment:
+            <<: *app-env
+            AUTORUN_ENABLED: 'true'
+            AUTORUN_LARAVEL_MIGRATION_ISOLATION: 'true'
+        networks: [internal, network_public]
+        deploy:
+            replicas: 2
+            update_config: *rolling-update
+            rollback_config: { parallelism: 1, order: start-first }
+            restart_policy: { condition: any, delay: 5s }
+            resources:
+                limits: { cpus: '1.0', memory: 384M }
+            labels:
+                - traefik.enable=true
+                - traefik.docker.network=network_public
+                - traefik.http.routers.academy.rule=Host(`academy.sempertechnology.com.br`)
+                - traefik.http.routers.academy.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}
+                - traefik.http.routers.academy.tls=true
+                - traefik.http.routers.academy.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencryptresolver}
+                - traefik.http.services.academy.loadbalancer.server.port=8080
+                - traefik.http.services.academy.loadbalancer.healthcheck.path=/up
+
+    horizon:
+        <<: *app-base
+        command: ['php', '/var/www/html/artisan', 'horizon']
+        stop_grace_period: 60s
+        healthcheck:
+            test: ['CMD', 'healthcheck-horizon']
+            start_period: 15s
+        deploy:
+            replicas: 1
+            update_config: *rolling-update
+            resources:
+                limits: { cpus: '1.0', memory: 256M }
+
+    scheduler:
+        <<: *app-base
+        command: ['php', '/var/www/html/artisan', 'schedule:work']
+        healthcheck:
+            test: ['CMD', 'healthcheck-schedule']
+            start_period: 15s
+        deploy:
+            replicas: 1
+            update_config: *rolling-update
+            resources:
+                limits: { cpus: '0.25', memory: 128M }
+
+    video-worker:
+        <<: *app-base
+        image: ghcr.io/bartolomeusilva/academy-video-worker:${IMAGE_TAG:?defina IMAGE_TAG}
+        stop_grace_period: 5m
+        healthcheck:
+            disable: true
+        volumes:
+            - video-tmp:/tmp/video
+        deploy:
+            replicas: 1
+            update_config:
+                { parallelism: 1, order: stop-first, failure_action: rollback }
+            resources:
+                limits: { cpus: '${VIDEO_WORKER_CPUS:-2.0}', memory: 1536M }
+
+    postgres:
+        image: postgres:17-alpine
+        environment:
+            POSTGRES_DB: academy
+            POSTGRES_USER: academy
+            POSTGRES_PASSWORD_FILE: /run/secrets/academy_db_password
+        command:
+            [
+                'postgres',
+                '-c',
+                'shared_buffers=192MB',
+                '-c',
+                'max_connections=60',
+            ]
+        secrets: [academy_db_password]
+        volumes:
+            - postgres-data:/var/lib/postgresql/data
+        networks: [internal]
+        healthcheck:
+            test: ['CMD', 'pg_isready', '-q', '-d', 'academy', '-U', 'academy']
+            interval: 10s
+            retries: 5
+        deploy:
+            replicas: 1
+            placement:
+                constraints: [node.role == manager]
+            resources:
+                limits: { memory: 768M }
+
+    redis:
+        image: redis:7-alpine
+        command:
+            - sh
+            - -c
+            - exec redis-server --appendonly yes --maxmemory 200mb --maxmemory-policy noeviction --requirepass "$$(cat /run/secrets/academy_redis_password)"
+        secrets: [academy_redis_password]
+        volumes:
+            - redis-data:/data
+        networks: [internal]
+        deploy:
+            replicas: 1
+            placement:
+                constraints: [node.role == manager]
+            resources:
+                limits: { memory: 256M }
+
+networks:
+    internal:
+        driver: overlay
+    network_public:
+        external: true
+
+volumes:
+    postgres-data:
+    redis-data:
+    video-tmp:
+
+secrets:
+    academy_app_key: { external: true }
+    academy_db_password: { external: true }
+    academy_redis_password: { external: true }
+    academy_s3_key: { external: true }
+    academy_s3_secret: { external: true }
+    academy_mail_password: { external: true }

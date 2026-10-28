@@ -73,6 +73,15 @@ return [
             'after_commit' => false,
         ],
 
+        'redis-video' => [
+            'driver' => 'redis',
+            'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
+            'queue' => 'video',
+            'retry_after' => (int) env('REDIS_VIDEO_QUEUE_RETRY_AFTER', 7500),
+            'block_for' => null,
+            'after_commit' => true,
+        ],
+
         'deferred' => [
             'driver' => 'deferred',
         ],

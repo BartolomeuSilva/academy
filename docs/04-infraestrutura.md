@@ -39,17 +39,31 @@ Um `Dockerfile` multi-stage com alvos:
 
 ## 4.3 Ambiente local
 
-`compose.yaml` com: `app` (alvo `dev`, código montado), `vite`, `horizon`, `video-worker`, `postgres`, `redis`, `minio` + `minio-init` (cria bucket e CORS), `mailpit`.
+O PHP e o Node rodam na máquina (`composer run dev`); o `compose.yaml` sobe os serviços de apoio com portas que não conflitam com outros projetos:
+
+| Serviço                                         | Imagem               | Porta local                 |
+| ----------------------------------------------- | -------------------- | --------------------------- |
+| Postgres (bancos `academy` e `academy_testing`) | `postgres:17-alpine` | 54320                       |
+| Redis                                           | `redis:7-alpine`     | 63790                       |
+| S3 (bucket `academy`, criado pelo `s3-init`)    | `rustfs/rustfs`      | 9000 (API) / 9001 (console) |
+| Mailpit                                         | `axllent/mailpit`    | 11025 (SMTP) / 18025 (web)  |
+
+> A MinIO deixou de publicar imagens Docker públicas; localmente usamos o **RustFS**, compatível com a API S3. Produção continua no MinIO existente.
 
 ```bash
-docker compose up -d
-docker compose exec app composer setup
-docker compose exec app php artisan test --parallel
+docker compose up -d                  # serviços de apoio
+composer setup                        # dependências, .env, migrations, build
+composer run dev                      # servidor + Vite + filas
+composer test                         # Pint, PHPStan, Unit + Feature (Postgres)
+composer test:browser                 # testes de browser (requer npm run build)
+docker compose --profile prod up -d --build   # imagem de produção em http://localhost:8080
 ```
 
-Paridade com produção: mesmas versões de Postgres, Redis, MinIO e mesma imagem base.
+O perfil `prod` sobe `app`, `horizon`, `scheduler` e `video-worker` a partir do mesmo `Dockerfile` usado no deploy — é o teste de fumaça local antes de publicar.
 
-## 4.4 Stack de produção (`deploy/stack.yml` — esboço)
+## 4.4 Stack de produção (`deploy/stack.yml`)
+
+O arquivo completo está em `deploy/stack.yml`. Resumo:
 
 ```yaml
 services:
@@ -153,23 +167,46 @@ services:
 
 > Valores entre `<>` dependem das informações listadas em [Pendências](07-pendencias.md). Postgres e Redis **não** publicam portas e ficam só na rede interna.
 
-## 4.5 Secrets
+## 4.5 Preparação da VPS (uma vez)
 
-Criados uma vez na VPS (`docker secret create`), nunca no repositório:
+```bash
+# 1. Diretório de deploy e configuração não secreta
+sudo mkdir -p /opt/academy && sudo chown $USER /opt/academy
+cp academy.env.example /opt/academy/academy.env   # e preencha (SMTP, Traefik)
 
-`academy_app_key`, `academy_db_password`, `academy_redis_password`, `academy_s3_key`, `academy_s3_secret`, `academy_mail_password`.
+# 2. Secrets (nunca no repositório)
+php artisan key:generate --show | docker secret create academy_app_key -
+openssl rand -base64 32 | tr -d '
+' | docker secret create academy_db_password -
+openssl rand -base64 32 | tr -d '
+' | docker secret create academy_redis_password -
+printf '%s' '<access-key-minio>'  | docker secret create academy_s3_key -
+printf '%s' '<secret-key-minio>'  | docker secret create academy_s3_secret -
+printf '%s' '<senha-smtp>'        | docker secret create academy_mail_password -
 
-No GitHub (Environment `production`): `DEPLOY_SSH_KEY`, `DEPLOY_HOST`, `DEPLOY_USER`, `GHCR_PULL_TOKEN`.
+# 3. Login no GHCR (token com read:packages) para o Swarm baixar as imagens
+echo '<token>' | docker login ghcr.io -u BartolomeuSilva --password-stdin
+
+# 4. MinIO: bucket, usuário dedicado e CORS para upload direto do navegador
+mc mb <alias>/academy
+mc admin user add <alias> academy <secret-key-minio>
+mc admin policy attach <alias> readwrite --user academy   # ou policy restrita ao bucket
+mc admin config set <alias> api cors_allow_origin=https://academy.sempertechnology.com.br
+```
+
+A aplicação lê os secrets por variáveis `*_FILE` (ex.: `DB_PASSWORD_FILE`), convertidas pelo `docker/entrypoint.sh`.
+
+No GitHub, Environment **`production`** (com revisor obrigatório) e secrets: `DEPLOY_SSH_KEY`, `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_KNOWN_HOSTS` (saída de `ssh-keyscan <host>`).
 
 ## 4.6 Deploy
 
-1. CI verde no `main` → job `deploy` aguarda **aprovação manual** no Environment `production`.
-2. Build e push das imagens `academy` e `academy-video-worker` com tag do SHA.
-3. SSH no manager do Swarm: `IMAGE_TAG=<sha> docker stack deploy -c stack.yml --with-registry-auth --prune academy`.
-4. Swarm faz rolling update `start-first`; se o healthcheck falhar, rollback automático.
-5. Smoke test pós-deploy (ver doc 5). Se falhar: `docker service rollback` em `app`, `horizon`, `scheduler` e `video-worker`.
+1. Push no `main` → workflow `ci` roda todos os gates e, se verdes, publica `ghcr.io/bartolomeusilva/academy` e `academy-video-worker` com a tag do SHA.
+2. Workflow `deploy` aguarda **aprovação manual** no Environment `production`.
+3. Copia `deploy/stack.yml` e `deploy/deploy.sh` para `/opt/academy/` e executa `IMAGE_TAG=<sha> bash /opt/academy/deploy.sh`.
+4. `deploy.sh` carrega `academy.env`, roda `docker stack deploy`, espera o serviço `app` convergir (rolling update `start-first`; healthcheck `/up`) e faz smoke test em `/up` e `/login` pela URL pública.
+5. Se a atualização ou o smoke test falhar, `deploy.sh` executa `docker service rollback` em `app`, `horizon`, `scheduler` e `video-worker` e o workflow fica vermelho.
 
-Migrations precisam ser **compatíveis com a versão anterior** (expand → contract), pois duas versões rodam juntas durante o rolling update.
+As migrations rodam no start do serviço `app` (`AUTORUN_LARAVEL_MIGRATION_ISOLATION`, com lock no Redis) e precisam ser **compatíveis com a versão anterior** (expand → contract), pois duas versões rodam juntas durante o rolling update.
 
 ## 4.7 Capacidade da VPS
 

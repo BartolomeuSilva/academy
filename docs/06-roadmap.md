@@ -4,14 +4,15 @@ Cada fase termina com tudo testado, todos os gates verdes e deploy em produção
 
 ## Fase 0 — Fundação
 
-- [ ] `git init`, repositório no GitHub, proteção do `main`
-- [ ] Remover Teams do starter kit (models, migrations, rotas, páginas, testes)
-- [ ] `UserRole` + `blocked_at`, middlewares `admin` e `not-blocked`, comando `academy:make-admin`
-- [ ] pt-BR: `APP_LOCALE`, `lang/pt_BR`, tradução das telas do starter kit
-- [ ] Dependências aprovadas: Horizon, flysystem S3, Pest Browser, Playwright, hls.js
-- [ ] `Dockerfile` multi-stage + `compose.yaml` local (Postgres, Redis, MinIO, Mailpit)
-- [ ] Testes rodando em Postgres; CI completo (doc 5)
-- [ ] `deploy/stack.yml`, secrets na VPS, limites de recursos ajustados à VPS
+- [x] `git init` e remote do GitHub (push e proteção do `main` pendentes)
+- [x] Remover Teams do starter kit (models, migrations, rotas, páginas, testes)
+- [x] `UserRole` + `blocked_at`, middlewares `admin` e `not-blocked`, comando `academy:make-admin`
+- [x] pt-BR: `APP_LOCALE`, `lang/pt_BR`, tradução das telas do starter kit
+- [x] Dependências instaladas: Horizon, flysystem S3, Pest Browser, Playwright (hls.js e drag & drop nas fases 1–3)
+- [x] `Dockerfile` multi-stage + `compose.yaml` local (Postgres, Redis, S3/RustFS, Mailpit)
+- [x] Testes rodando em Postgres; CI completo (doc 5)
+- [x] `deploy/stack.yml`, `deploy/deploy.sh` com rollback, limites de recursos ajustados à VPS
+- [ ] Preparação da VPS: secrets, `academy.env`, login no GHCR, bucket/CORS no MinIO (§4.5)
 - [ ] **Primeiro deploy** em `academy.sempertechnology.com.br` (login/cadastro funcionando) — valida toda a esteira cedo
 
 ## Fase 1 — Administração de conteúdo
