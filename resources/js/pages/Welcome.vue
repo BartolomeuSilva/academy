@@ -1,13 +1,7 @@
 <script setup lang="ts">
-import { Head, Link, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { Head, Link } from '@inertiajs/vue3';
 import { dashboard, login } from '@/routes';
 import { register } from '@/routes';
-
-const page = usePage();
-const dashboardUrl = computed(() =>
-    page.props.currentTeam ? dashboard(page.props.currentTeam.slug).url : '/',
-);
 </script>
 
 <template>
@@ -24,7 +18,7 @@ const dashboardUrl = computed(() =>
             <nav class="flex items-center justify-end gap-4">
                 <Link
                     v-if="$page.props.auth.user"
-                    :href="dashboardUrl"
+                    :href="dashboard()"
                     class="inline-block rounded-sm border border-[#19140035] px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#1915014a] dark:border-[#3E3E3A] dark:text-[#EDEDEC] dark:hover:border-[#62605b]"
                 >
                     Dashboard

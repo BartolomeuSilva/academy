@@ -6,15 +6,16 @@
 
 ## 5.2 Pirâmide de testes
 
-| Tipo | Ferramenta | O que cobre | Exemplos |
-|------|-----------|-------------|----------|
-| **Unit** | Pest | Lógica pura, sem framework/IO | `FfmpegCommandBuilder` gera escada sem upscale; cálculo de % de progresso; reescrita de playlist HLS |
-| **Feature** | Pest + `RefreshDatabase` | HTTP, validação, autorização, jobs, policies | Aluno recebe 404 em aula rascunho; admin publica aula sem vídeo → erro; comentário em resposta → 422; rate limit de comentários |
-| **Integração** | Pest (grupo `integration`) | FFmpeg real e MinIO real | Encoding de um vídeo de 3 s gera `master.m3u8` + 2 renditions; multipart upload completo no MinIO |
-| **Browser (E2E)** | Pest Browser (Playwright) | Fluxos críticos no navegador real, temas e mobile | Cadastro → verificação → catálogo; admin cria curso, envia vídeo, publica; aluno assiste, retoma posição, comenta; `assertNoJavaScriptErrors`, `assertNoAccessibilityIssues` em claro e escuro |
-| **Smoke (pós-deploy)** | script no CI | Produção responde | `/up` 200, login page 200, versão servida = SHA |
+| Tipo                   | Ferramenta                 | O que cobre                                       | Exemplos                                                                                                                                                                                       |
+| ---------------------- | -------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Unit**               | Pest                       | Lógica pura, sem framework/IO                     | `FfmpegCommandBuilder` gera escada sem upscale; cálculo de % de progresso; reescrita de playlist HLS                                                                                           |
+| **Feature**            | Pest + `RefreshDatabase`   | HTTP, validação, autorização, jobs, policies      | Aluno recebe 404 em aula rascunho; admin publica aula sem vídeo → erro; comentário em resposta → 422; rate limit de comentários                                                                |
+| **Integração**         | Pest (grupo `integration`) | FFmpeg real e MinIO real                          | Encoding de um vídeo de 3 s gera `master.m3u8` + 2 renditions; multipart upload completo no MinIO                                                                                              |
+| **Browser (E2E)**      | Pest Browser (Playwright)  | Fluxos críticos no navegador real, temas e mobile | Cadastro → verificação → catálogo; admin cria curso, envia vídeo, publica; aluno assiste, retoma posição, comenta; `assertNoJavaScriptErrors`, `assertNoAccessibilityIssues` em claro e escuro |
+| **Smoke (pós-deploy)** | script no CI               | Produção responde                                 | `/up` 200, login page 200, versão servida = SHA                                                                                                                                                |
 
 ### Regras
+
 - Factories com states para todos os models (`Course::factory()->published()`, `Video::factory()->ready()`, `User::factory()->admin()`).
 - `Storage::fake('s3')`, `Queue::fake()`, `Mail::fake()` nos testes de feature; serviços reais só nos de integração.
 - Testes rodam em **PostgreSQL** (não SQLite) para paridade com produção.
@@ -23,17 +24,17 @@
 
 ## 5.3 Quality gates
 
-| Gate | Comando | Falha quando |
-|------|---------|--------------|
-| Estilo PHP | `vendor/bin/pint --test` | Qualquer arquivo fora do padrão |
-| Análise estática PHP | `vendor/bin/phpstan analyse` (nível 7) | Qualquer erro |
-| Lint/format JS | `npm run check` | Qualquer erro |
-| Tipos TS/Vue | `npm run types:check` | Qualquer erro |
-| Testes + cobertura | `php artisan test --parallel --coverage --min=80` | Teste falhando ou cobertura < 80% |
-| Integração | `vendor/bin/pest --group=integration` | Teste falhando |
-| Browser | `vendor/bin/pest tests/Browser --parallel` | Teste falhando |
-| Build da imagem | `docker build --target app` e `--target video-worker` | Build falhando |
-| Auditoria de dependências | `composer audit` e `npm audit --audit-level=high` | Vulnerabilidade alta/crítica |
+| Gate                      | Comando                                               | Falha quando                      |
+| ------------------------- | ----------------------------------------------------- | --------------------------------- |
+| Estilo PHP                | `vendor/bin/pint --test`                              | Qualquer arquivo fora do padrão   |
+| Análise estática PHP      | `vendor/bin/phpstan analyse` (nível 7)                | Qualquer erro                     |
+| Lint/format JS            | `npm run check`                                       | Qualquer erro                     |
+| Tipos TS/Vue              | `npm run types:check`                                 | Qualquer erro                     |
+| Testes + cobertura        | `php artisan test --parallel --coverage --min=80`     | Teste falhando ou cobertura < 80% |
+| Integração                | `vendor/bin/pest --group=integration`                 | Teste falhando                    |
+| Browser                   | `vendor/bin/pest tests/Browser --parallel`            | Teste falhando                    |
+| Build da imagem           | `docker build --target app` e `--target video-worker` | Build falhando                    |
+| Auditoria de dependências | `composer audit` e `npm audit --audit-level=high`     | Vulnerabilidade alta/crítica      |
 
 ## 5.4 Fluxo Git
 

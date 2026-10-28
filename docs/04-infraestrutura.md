@@ -24,13 +24,13 @@ Stack Swarm: **`academy`**. Redes: `academy_internal` (overlay, privada) + `netw
 
 Um `Dockerfile` multi-stage com alvos:
 
-| Alvo | Base | Uso |
-|------|------|-----|
-| `vendor` | `composer` | `composer install --no-dev --optimize-autoloader` |
-| `assets` | PHP CLI + Node 22 | `npm ci && npm run build` (Wayfinder precisa do PHP no build) |
-| `app` | `serversideup/php:8.5-fpm-nginx` (tag a confirmar) | Web, Horizon e scheduler; extensões `pdo_pgsql`, `redis`, `intl`, `pcntl`; OPcache ligado |
-| `video-worker` | `app` + `ffmpeg` | Worker de encoding |
-| `dev` | `app` + Xdebug/pcov + Node | Ambiente local |
+| Alvo           | Base                                               | Uso                                                                                       |
+| -------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `vendor`       | `composer`                                         | `composer install --no-dev --optimize-autoloader`                                         |
+| `assets`       | PHP CLI + Node 22                                  | `npm ci && npm run build` (Wayfinder precisa do PHP no build)                             |
+| `app`          | `serversideup/php:8.5-fpm-nginx` (tag a confirmar) | Web, Horizon e scheduler; extensões `pdo_pgsql`, `redis`, `intl`, `pcntl`; OPcache ligado |
+| `video-worker` | `app` + `ffmpeg`                                   | Worker de encoding                                                                        |
+| `dev`          | `app` + Xdebug/pcov + Node                         | Ambiente local                                                                            |
 
 - Imagem roda como usuário não-root; `storage` efêmero (arquivos ficam no MinIO).
 - Repositório: https://github.com/BartolomeuSilva/academy
@@ -53,76 +53,102 @@ Paridade com produção: mesmas versões de Postgres, Redis, MinIO e mesma image
 
 ```yaml
 services:
-  app:
-    image: ghcr.io/bartolomeusilva/academy:${IMAGE_TAG}
-    secrets: [app_key, db_password, redis_password, s3_secret, mail_password]
-    environment:
-      APP_ENV: production
-      APP_URL: https://academy.sempertechnology.com.br
-      DB_CONNECTION: pgsql
-      DB_HOST: postgres
-      REDIS_HOST: redis
-      CACHE_STORE: redis
-      SESSION_DRIVER: redis
-      QUEUE_CONNECTION: redis
-      FILESYSTEM_DISK: s3
-      AWS_ENDPOINT: https://storage.ichatbot.com.br
-      AWS_USE_PATH_STYLE_ENDPOINT: "true"
-    networks: [internal, network_public]
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8080/up"]
-      interval: 15s
-      retries: 3
-      start_period: 40s
-    deploy:
-      replicas: 2
-      update_config: { parallelism: 1, order: start-first, failure_action: rollback, monitor: 30s }
-      rollback_config: { parallelism: 1, order: start-first }
-      resources: { limits: { cpus: "1.0", memory: 384M } }
-      labels:
-        - traefik.enable=true
-        - traefik.docker.network=network_public
-        - traefik.http.routers.academy.rule=Host(`academy.sempertechnology.com.br`)
-        - traefik.http.routers.academy.entrypoints=<websecure>
-        - traefik.http.routers.academy.tls.certresolver=<resolver>
-        - traefik.http.services.academy.loadbalancer.server.port=8080
+    app:
+        image: ghcr.io/bartolomeusilva/academy:${IMAGE_TAG}
+        secrets:
+            [app_key, db_password, redis_password, s3_secret, mail_password]
+        environment:
+            APP_ENV: production
+            APP_URL: https://academy.sempertechnology.com.br
+            DB_CONNECTION: pgsql
+            DB_HOST: postgres
+            REDIS_HOST: redis
+            CACHE_STORE: redis
+            SESSION_DRIVER: redis
+            QUEUE_CONNECTION: redis
+            FILESYSTEM_DISK: s3
+            AWS_ENDPOINT: https://storage.ichatbot.com.br
+            AWS_USE_PATH_STYLE_ENDPOINT: 'true'
+        networks: [internal, network_public]
+        healthcheck:
+            test: ['CMD', 'curl', '-fsS', 'http://localhost:8080/up']
+            interval: 15s
+            retries: 3
+            start_period: 40s
+        deploy:
+            replicas: 2
+            update_config:
+                {
+                    parallelism: 1,
+                    order: start-first,
+                    failure_action: rollback,
+                    monitor: 30s,
+                }
+            rollback_config: { parallelism: 1, order: start-first }
+            resources: { limits: { cpus: '1.0', memory: 384M } }
+            labels:
+                - traefik.enable=true
+                - traefik.docker.network=network_public
+                - traefik.http.routers.academy.rule=Host(`academy.sempertechnology.com.br`)
+                - traefik.http.routers.academy.entrypoints=<websecure>
+                - traefik.http.routers.academy.tls.certresolver=<resolver>
+                - traefik.http.services.academy.loadbalancer.server.port=8080
 
-  horizon:
-    image: ghcr.io/bartolomeusilva/academy:${IMAGE_TAG}
-    command: ["php", "artisan", "horizon"]
-    stop_grace_period: 60s
-    deploy: { replicas: 1 }
+    horizon:
+        image: ghcr.io/bartolomeusilva/academy:${IMAGE_TAG}
+        command: ['php', 'artisan', 'horizon']
+        stop_grace_period: 60s
+        deploy: { replicas: 1 }
 
-  video-worker:
-    image: ghcr.io/bartolomeusilva/academy-video-worker:${IMAGE_TAG}
-    command: ["php", "artisan", "queue:work", "redis", "--queue=video", "--timeout=7200", "--tries=2"]
-    stop_grace_period: 5m
-    volumes: [video_tmp:/tmp/video]
-    deploy:
-      replicas: 1
-      resources: { limits: { cpus: "2.0", memory: 1536M } }
+    video-worker:
+        image: ghcr.io/bartolomeusilva/academy-video-worker:${IMAGE_TAG}
+        command:
+            [
+                'php',
+                'artisan',
+                'queue:work',
+                'redis',
+                '--queue=video',
+                '--timeout=7200',
+                '--tries=2',
+            ]
+        stop_grace_period: 5m
+        volumes: [video_tmp:/tmp/video]
+        deploy:
+            replicas: 1
+            resources: { limits: { cpus: '2.0', memory: 1536M } }
 
-  scheduler:
-    image: ghcr.io/bartolomeusilva/academy:${IMAGE_TAG}
-    command: ["php", "artisan", "schedule:work"]
-    deploy: { replicas: 1 }
+    scheduler:
+        image: ghcr.io/bartolomeusilva/academy:${IMAGE_TAG}
+        command: ['php', 'artisan', 'schedule:work']
+        deploy: { replicas: 1 }
 
-  postgres:
-    image: postgres:17-alpine
-    secrets: [db_password]
-    environment: { POSTGRES_DB: academy, POSTGRES_USER: academy, POSTGRES_PASSWORD_FILE: /run/secrets/db_password }
-    volumes: [pg_data:/var/lib/postgresql/data]
-    networks: [internal]
-    deploy:
-      replicas: 1
-      placement: { constraints: [node.role == manager] }
+    postgres:
+        image: postgres:17-alpine
+        secrets: [db_password]
+        environment:
+            {
+                POSTGRES_DB: academy,
+                POSTGRES_USER: academy,
+                POSTGRES_PASSWORD_FILE: /run/secrets/db_password,
+            }
+        volumes: [pg_data:/var/lib/postgresql/data]
+        networks: [internal]
+        deploy:
+            replicas: 1
+            placement: { constraints: [node.role == manager] }
 
-  redis:
-    image: redis:7-alpine
-    command: ["sh", "-c", "redis-server --appendonly yes --requirepass $$(cat /run/secrets/redis_password)"]
-    volumes: [redis_data:/data]
-    networks: [internal]
-    deploy: { replicas: 1 }
+    redis:
+        image: redis:7-alpine
+        command:
+            [
+                'sh',
+                '-c',
+                'redis-server --appendonly yes --requirepass $$(cat /run/secrets/redis_password)',
+            ]
+        volumes: [redis_data:/data]
+        networks: [internal]
+        deploy: { replicas: 1 }
 ```
 
 > Valores entre `<>` dependem das informações listadas em [Pendências](07-pendencias.md). Postgres e Redis **não** publicam portas e ficam só na rede interna.
@@ -150,23 +176,25 @@ Migrations precisam ser **compatíveis com a versão anterior** (expand → cont
 VPS compartilhada com outros apps: **8 GB RAM / 200 GB disco** (vCPUs a confirmar).
 
 ### Memória (limites do Swarm)
-| Serviço | Limite |
-|---------|--------|
-| app ×2 | 2 × 384 MB |
-| horizon | 256 MB |
-| scheduler | 128 MB |
-| video-worker | 1,5 GB (FFmpeg `-threads 2`) |
-| postgres | 768 MB (`shared_buffers=192MB`) |
-| redis | 256 MB (`maxmemory 200mb`) |
+
+| Serviço           | Limite                                                               |
+| ----------------- | -------------------------------------------------------------------- |
+| app ×2            | 2 × 384 MB                                                           |
+| horizon           | 256 MB                                                               |
+| scheduler         | 128 MB                                                               |
+| video-worker      | 1,5 GB (FFmpeg `-threads 2`)                                         |
+| postgres          | 768 MB (`shared_buffers=192MB`)                                      |
+| redis             | 256 MB (`maxmemory 200mb`)                                           |
 | **Total Academy** | **~3,7 GB** — sobra ~4 GB para o SO, Traefik, MinIO e os outros apps |
 
 ### Disco (estimativa por 10 min de vídeo)
-| Item | Tetos 0,8/2,0/3,5 Mbps | Típico (aulas de tela/slides) |
-|------|------|------|
-| HLS (3 renditions) | ~470 MB | ~200 MB |
-| Original | ~300 MB | ~300 MB |
-| **Total mantendo original** | **~770 MB** | **~500 MB** |
-| **Total apagando original** | **~470 MB** | **~200 MB** |
+
+| Item                        | Tetos 0,8/2,0/3,5 Mbps | Típico (aulas de tela/slides) |
+| --------------------------- | ---------------------- | ----------------------------- |
+| HLS (3 renditions)          | ~470 MB                | ~200 MB                       |
+| Original                    | ~300 MB                | ~300 MB                       |
+| **Total mantendo original** | **~770 MB**            | **~500 MB**                   |
+| **Total apagando original** | **~470 MB**            | **~200 MB**                   |
 
 Com ~100 GB livres para o Academy: **~20–35 h** de vídeo mantendo os originais, **~35–80 h** apagando-os. Disco temporário do worker: até ~6 GB durante o encoding de um vídeo de 1 h.
 

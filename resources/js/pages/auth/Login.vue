@@ -3,7 +3,6 @@ import { Form, Head } from '@inertiajs/vue3';
 import InputError from '@/components/InputError.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import PasskeyVerify from '@/components/PasskeyVerify.vue';
-import TeamInvitationAlert from '@/components/TeamInvitationAlert.vue';
 import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -13,7 +12,6 @@ import { Spinner } from '@/components/ui/spinner';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
-import type { TeamInvitationContext } from '@/types';
 
 defineOptions({
     layout: {
@@ -25,7 +23,6 @@ defineOptions({
 defineProps<{
     status?: string;
     canResetPassword: boolean;
-    teamInvitation?: TeamInvitationContext | null;
 }>();
 </script>
 
@@ -38,12 +35,6 @@ defineProps<{
     >
         {{ status }}
     </div>
-
-    <TeamInvitationAlert
-        v-if="teamInvitation"
-        :invitation="teamInvitation"
-        action="Log in"
-    />
 
     <PasskeyVerify />
 
@@ -114,13 +105,7 @@ defineProps<{
         <div class="text-center text-sm text-muted-foreground">
             Don't have an account?
             <TextLink
-                :href="
-                    register({
-                        query: {
-                            invitation: teamInvitation?.code,
-                        },
-                    })
-                "
+                :href="register()"
                 :tabindex="5"
                 data-test="register-link"
             >
