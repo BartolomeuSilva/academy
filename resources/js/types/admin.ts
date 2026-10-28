@@ -42,7 +42,7 @@ export type AdminLesson = {
     description: string | null;
     status: PublicationStatus;
     module: { id: number; title: string };
-    course: { id: number; title: string };
+    course: { id: number; slug: string; title: string };
 };
 
 export type AdminAttachment = {

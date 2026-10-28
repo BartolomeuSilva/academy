@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Lesson;
+use App\Models\Module;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -49,7 +51,12 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Create a lesson students can watch (published, with an encoded video) in the given module.
+ *
+ * @param  array<string, mixed>  $attributes
+ */
+function visibleLesson(Module $module, array $attributes = [], int $durationSeconds = 600): Lesson
 {
-    // ..
+    return Lesson::factory()->for($module)->published()->withVideo($durationSeconds)->create($attributes);
 }

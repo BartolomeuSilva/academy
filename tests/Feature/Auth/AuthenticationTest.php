@@ -21,7 +21,7 @@ test('users can authenticate using the login screen', function () {
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard'));
+    $response->assertRedirect(route('courses.index'));
 });
 
 test('blocked users can not authenticate', function () {
@@ -36,7 +36,7 @@ test('blocked users can not authenticate', function () {
     $response->assertSessionHasErrors(['email' => 'Sua conta foi bloqueada. Entre em contato com um administrador.']);
 });
 
-test('passkey login response redirects to the dashboard', function () {
+test('passkey login response redirects to the catalog', function () {
     $user = User::factory()->create();
 
     $request = Request::create(route('login', absolute: false), 'GET', server: [
@@ -47,7 +47,7 @@ test('passkey login response redirects to the dashboard', function () {
 
     $jsonResponse = app(PasskeyLoginResponse::class)->toResponse($request);
 
-    expect($jsonResponse->getData()->redirect)->toBe(route('dashboard'));
+    expect($jsonResponse->getData()->redirect)->toBe(route('courses.index'));
 });
 
 test('users with two factor enabled are redirected to two factor challenge', function () {

@@ -20,5 +20,5 @@ test('new users can register', function () {
     $this->assertAuthenticated();
     expect(User::query()->where('email', 'test@example.com')->sole()->role)->toBe(UserRole::Student);
 
-    $response->assertRedirect(route('dashboard'));
+    $response->assertRedirect(route('courses.index'));
 });

@@ -8,12 +8,12 @@ test('guests are redirected to the login page', function () {
     $response->assertRedirect(route('login'));
 });
 
-test('authenticated users can visit the dashboard', function () {
+test('the old dashboard address leads to the catalog', function () {
     $user = User::factory()->create();
 
     $response = $this
         ->actingAs($user)
         ->get(route('dashboard'));
 
-    $response->assertOk();
+    $response->assertRedirect(route('courses.index'));
 });

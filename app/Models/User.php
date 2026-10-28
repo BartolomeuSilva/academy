@@ -7,7 +7,9 @@ use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -29,6 +31,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property-read Collection<int, LessonProgress> $lessonProgress
  */
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'blocked_at'])]
@@ -51,6 +54,14 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'role' => UserRole::class,
             'blocked_at' => 'datetime',
         ];
+    }
+
+    /**
+     * @return HasMany<LessonProgress, $this>
+     */
+    public function lessonProgress(): HasMany
+    {
+        return $this->hasMany(LessonProgress::class);
     }
 
     /**

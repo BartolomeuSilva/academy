@@ -170,3 +170,30 @@
         @apply bg-background text-foreground;
     }
 }
+
+/* Simple Markdown rendered from course and lesson descriptions. */
+@layer components {
+    .rich-text {
+        @apply space-y-3 text-sm leading-relaxed;
+    }
+    .rich-text h1,
+    .rich-text h2,
+    .rich-text h3 {
+        @apply pt-2 text-base font-semibold;
+    }
+    .rich-text ul {
+        @apply list-disc space-y-1 pl-5;
+    }
+    .rich-text ol {
+        @apply list-decimal space-y-1 pl-5;
+    }
+    .rich-text a {
+        @apply font-medium underline underline-offset-4;
+    }
+    .rich-text code {
+        @apply rounded bg-muted px-1 py-0.5 text-xs;
+    }
+    .rich-text blockquote {
+        @apply border-l-2 pl-3 text-muted-foreground;
+    }
+}

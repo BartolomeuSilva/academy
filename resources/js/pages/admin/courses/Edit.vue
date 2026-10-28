@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Form, Head, router } from '@inertiajs/vue3';
-import { Trash2 } from '@lucide/vue';
+import { Form, Head, Link, router } from '@inertiajs/vue3';
+import { Eye, Trash2 } from '@lucide/vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import CourseContentEditor from '@/components/CourseContentEditor.vue';
 import CourseCoverCard from '@/components/CourseCoverCard.vue';
@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { destroy, edit, index, update } from '@/routes/admin/courses';
+import { show as showCourse } from '@/routes/courses';
 import type { AdminCourse, AdminModule } from '@/types';
 
 const props = defineProps<{
@@ -41,6 +42,14 @@ function removeCourse(close: () => void): void {
                 {{ course.title }}
             </h1>
             <StatusBadge :status="course.status" />
+            <Button variant="outline" size="sm" class="ml-auto" as-child>
+                <Link
+                    :href="showCourse(course.slug)"
+                    data-test="preview-course-link"
+                >
+                    <Eye /> Ver como aluno
+                </Link>
+            </Button>
         </div>
 
         <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">

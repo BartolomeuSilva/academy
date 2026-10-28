@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { GraduationCap, LayoutGrid } from '@lucide/vue';
+import { GraduationCap, BookOpen } from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -14,17 +14,17 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
+import { index as catalog } from '@/routes/courses';
 import { index as adminCourses } from '@/routes/admin/courses';
 import type { NavItem } from '@/types';
 
-const dashboardUrl = dashboard().url;
+const catalogUrl = catalog().url;
 
 const mainNavItems: NavItem[] = [
     {
-        title: 'Início',
-        href: dashboardUrl,
-        icon: LayoutGrid,
+        title: 'Cursos',
+        href: catalogUrl,
+        icon: BookOpen,
     },
 ];
 
@@ -49,7 +49,7 @@ const adminNavItems = computed<NavItem[]>(() =>
             <SidebarMenu>
                 <SidebarMenuItem>
                     <SidebarMenuButton size="lg" as-child>
-                        <Link :href="dashboardUrl">
+                        <Link :href="catalogUrl">
                             <AppLogo />
                         </Link>
                     </SidebarMenuButton>

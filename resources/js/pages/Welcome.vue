@@ -3,7 +3,8 @@ import { Head, Link } from '@inertiajs/vue3';
 import { MessageSquare, PlayCircle, Paperclip } from '@lucide/vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import { Button } from '@/components/ui/button';
-import { dashboard, login, register } from '@/routes';
+import { login, register } from '@/routes';
+import { index as catalog } from '@/routes/courses';
 
 const features = [
     {
@@ -38,7 +39,7 @@ const features = [
 
             <nav class="flex items-center gap-2">
                 <Button v-if="$page.props.auth.user" as-child>
-                    <Link :href="dashboard()">Acessar plataforma</Link>
+                    <Link :href="catalog()">Acessar plataforma</Link>
                 </Button>
                 <template v-else>
                     <Button variant="ghost" as-child>

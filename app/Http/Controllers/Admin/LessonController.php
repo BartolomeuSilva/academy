@@ -53,7 +53,7 @@ class LessonController extends Controller
                 'description' => $lesson->description,
                 'status' => $lesson->status,
                 'module' => ['id' => $lesson->module->id, 'title' => $lesson->module->title],
-                'course' => ['id' => $lesson->course->id, 'title' => $lesson->course->title],
+                'course' => ['id' => $lesson->course->id, 'slug' => $lesson->course->slug, 'title' => $lesson->course->title],
             ],
             'video' => $lesson->video ? [
                 'id' => $lesson->video->id,

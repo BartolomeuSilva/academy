@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\PublicationStatus;
 use Database\Factories\LessonFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 /**
  * @property int $id
@@ -30,6 +32,7 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, LessonAttachment> $attachments
  * @property-read Video|null $video
  * @property-read Collection<int, Video> $videos
+ * @property-read Collection<int, LessonProgress> $progress
  */
 #[Fillable(['title', 'slug', 'description'])]
 class Lesson extends Model
@@ -91,6 +94,46 @@ class Lesson extends Model
     public function videos(): HasMany
     {
         return $this->hasMany(Video::class);
+    }
+
+    /**
+     * @return HasMany<LessonProgress, $this>
+     */
+    public function progress(): HasMany
+    {
+        return $this->hasMany(LessonProgress::class);
+    }
+
+    /**
+     * Limit the query to lessons students can watch: published and with an encoded video.
+     *
+     * @param  Builder<Lesson>  $query
+     */
+    #[Scope]
+    protected function visible(Builder $query): void
+    {
+        $query->where('status', PublicationStatus::Published)->whereNotNull('video_id');
+    }
+
+    /**
+     * Limit the query to the lessons the user may open: every lesson for admins, visible ones for students.
+     *
+     * @param  Builder<Lesson>  $query
+     */
+    #[Scope]
+    protected function visibleTo(Builder $query, User $user): void
+    {
+        $query->unless($user->isAdmin(), fn (Builder $query) => $query->visible());
+    }
+
+    /**
+     * Render the description's simple Markdown as HTML, escaping any raw HTML and unsafe links.
+     */
+    public function descriptionHtml(): ?string
+    {
+        return filled($this->description)
+            ? Str::markdown($this->description, ['html_input' => 'escape', 'allow_unsafe_links' => false])
+            : null;
     }
 
     /**

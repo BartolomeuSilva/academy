@@ -49,7 +49,7 @@ test('admin pages have no accessibility issues in light and dark mode', function
 test('students do not see the administration menu', function () {
     $this->actingAs(User::factory()->create());
 
-    visit('/dashboard')->assertDontSee('Administração');
+    visit('/cursos')->assertDontSee('Administração');
 
     expect(Course::query()->count())->toBe(0);
 });

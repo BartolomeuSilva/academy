@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid, Menu } from '@lucide/vue';
+import { BookOpen, Menu } from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
@@ -28,7 +28,7 @@ import {
 import UserMenuContent from '@/components/UserMenuContent.vue';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { getInitials } from '@/composables/useInitials';
-import { dashboard } from '@/routes';
+import { index as catalog } from '@/routes/courses';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
 type Props = {
@@ -43,16 +43,16 @@ const page = usePage();
 const auth = computed(() => page.props.auth);
 const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
 
-const dashboardUrl = dashboard().url;
+const catalogUrl = catalog().url;
 
 const activeItemStyles =
     'text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100';
 
 const mainNavItems = computed<NavItem[]>(() => [
     {
-        title: 'Início',
-        href: dashboardUrl,
-        icon: LayoutGrid,
+        title: 'Cursos',
+        href: catalogUrl,
+        icon: BookOpen,
     },
 ]);
 </script>
@@ -111,7 +111,7 @@ const mainNavItems = computed<NavItem[]>(() => [
                     </Sheet>
                 </div>
 
-                <Link :href="dashboardUrl" class="flex items-center gap-x-2">
+                <Link :href="catalogUrl" class="flex items-center gap-x-2">
                     <AppLogo />
                 </Link>
 

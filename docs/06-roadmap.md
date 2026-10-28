@@ -34,10 +34,10 @@ Cada fase termina com tudo testado, todos os gates verdes e deploy em produção
 
 ## Fase 3 — Experiência do aluno
 
-- [ ] Catálogo (US-02), página do curso, página da aula com hls.js (US-03)
-- [ ] Anexos para o aluno (US-05)
-- [ ] Progresso e "continuar de onde parei" (US-04)
-- [ ] Testes de browser do fluxo completo, claro/escuro, mobile
+- [x] Catálogo (US-02), página do curso, página da aula com hls.js (US-03)
+- [x] Anexos para o aluno (US-05)
+- [x] Progresso e "continuar de onde parei" (US-04)
+- [x] Testes de browser do fluxo completo, claro/escuro, mobile
 
 ## Fase 4 — Comentários
 

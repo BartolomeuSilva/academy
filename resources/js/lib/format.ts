@@ -27,3 +27,20 @@ export function formatDuration(totalSeconds: number): string {
         ? `${hours}:${pad(minutes)}:${pad(seconds)}`
         : `${minutes}:${pad(seconds)}`;
 }
+
+/**
+ * Format a total length in seconds as rounded hours and minutes (e.g. "1 h 05 min", "12 min").
+ */
+export function formatTotalDuration(totalSeconds: number): string {
+    const totalMinutes = Math.max(1, Math.round(totalSeconds / 60));
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    if (hours === 0) {
+        return `${minutes} min`;
+    }
+
+    return minutes === 0
+        ? `${hours} h`
+        : `${hours} h ${String(minutes).padStart(2, '0')} min`;
+}

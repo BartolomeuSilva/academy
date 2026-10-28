@@ -39,20 +39,24 @@ lang/pt_BR/           # validation.php, auth.php, passwords.php, pagination.php
 
 ## 3.3 Rotas principais
 
-| Método            | URI                                            | Descrição                                                |
-| ----------------- | ---------------------------------------------- | -------------------------------------------------------- |
-| GET               | `/`                                            | Landing (visitante) / redireciona para catálogo (logado) |
-| GET               | `/cursos`                                      | Catálogo                                                 |
-| GET               | `/cursos/{course:slug}`                        | Página do curso                                          |
-| GET               | `/cursos/{course:slug}/aulas/{lesson:slug}`    | Página da aula                                           |
-| GET               | `/aulas/{lesson}/stream/{file}`                | Playlist HLS reescrita com URLs assinadas                |
-| GET               | `/anexos/{attachment}`                         | Redireciona para URL assinada                            |
-| PUT               | `/aulas/{lesson}/progresso`                    | Salva posição / conclusão                                |
-| POST/PATCH/DELETE | `/aulas/{lesson}/comentarios[/{comment}]`      | Comentários                                              |
-| —                 | `/admin/...`                                   | CRUDs administrativos (middleware `admin`)               |
-| POST              | `/admin/aulas/{lesson}/video/uploads`          | Inicia multipart upload                                  |
-| POST              | `/admin/aulas/{lesson}/video/uploads/parts`    | Assina URLs das partes                                   |
-| POST              | `/admin/aulas/{lesson}/video/uploads/complete` | Conclui upload e enfileira encoding                      |
+| Método            | URI                                         | Descrição                                                |
+| ----------------- | ------------------------------------------- | -------------------------------------------------------- |
+| GET               | `/`                                         | Landing (visitante) / redireciona para catálogo (logado) |
+| GET               | `/cursos`                                   | Catálogo (`/dashboard` redireciona para cá)              |
+| GET               | `/cursos/{course:slug}`                     | Página do curso                                          |
+| GET               | `/cursos/{course:slug}/aulas/{lesson:slug}` | Página da aula                                           |
+| GET               | `/videos/{video}/{playlist}.m3u8`           | Playlist HLS reescrita com URLs assinadas                |
+| GET               | `/anexos/{attachment}[?download=1]`         | Redireciona para URL assinada (abrir ou baixar)          |
+| PUT               | `/aulas/{lesson}/progresso`                 | Salva posição e/ou conclusão manual                      |
+| POST/PATCH/DELETE | `/aulas/{lesson}/comentarios[/{comment}]`   | Comentários (Fase 4)                                     |
+| —                 | `/admin/...`                                | CRUDs administrativos (middleware `admin`)               |
+| POST              | `/admin/aulas/{lesson}/video`               | Inicia multipart upload                                  |
+| POST              | `/admin/videos/{video}/partes`              | Assina URLs das partes                                   |
+| POST              | `/admin/videos/{video}/concluir`            | Conclui upload e enfileira encoding                      |
+
+Aluno recebe **404** (não 403) para curso, aula ou anexo fora do catálogo. Admin pré-visualiza rascunhos pelas mesmas páginas ("Ver como aluno").
+
+**Progresso:** o player salva a posição a cada 15 s de reprodução, ao pausar e ao sair da página (`fetch` com `keepalive`). A aula é concluída na primeira vez que a posição cruza 90% da duração; se o aluno desmarcar, ela não volta a ser concluída sozinha enquanto a posição continuar acima desse ponto. Ao reabrir, o vídeo retoma da posição salva, exceto nos 15 s finais (recomeça do início). "Continuar de onde parei" aponta para a última aula assistida, ou para a próxima não concluída se aquela já foi concluída.
 
 Rotas com nomes; frontend consome via Wayfinder (`@/actions`, `@/routes`).
 

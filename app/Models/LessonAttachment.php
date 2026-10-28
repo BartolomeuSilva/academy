@@ -52,13 +52,14 @@ class LessonAttachment extends Model
     }
 
     /**
-     * Get a short-lived URL that downloads the file with its original name.
+     * Get a short-lived URL that opens the file, or downloads it, with its original name.
      */
-    public function temporaryUrl(): string
+    public function temporaryUrl(bool $download = false, int $minutes = 60): string
     {
-        return Storage::temporaryUrl($this->path, now()->addHour(), [
+        return Storage::temporaryUrl($this->path, now()->addMinutes($minutes), [
             'ResponseContentDisposition' => sprintf(
-                'inline; filename="%s"; filename*=UTF-8\'\'%s',
+                '%s; filename="%s"; filename*=UTF-8\'\'%s',
+                $download ? 'attachment' : 'inline',
                 addcslashes(Str::ascii($this->original_name), '"\\'),
                 rawurlencode($this->original_name),
             ),

@@ -18,9 +18,36 @@ function xsrfToken(): string {
     return match ? decodeURIComponent(match[1]) : '';
 }
 
-export async function postJson<T>(url: string, body: unknown): Promise<T> {
+type RequestOptions = {
+    /** Let the request outlive the page, e.g. when saving progress while leaving it. */
+    keepalive?: boolean;
+};
+
+export function postJson<T>(
+    url: string,
+    body: unknown,
+    options: RequestOptions = {},
+): Promise<T> {
+    return sendJson<T>('POST', url, body, options);
+}
+
+export function putJson<T>(
+    url: string,
+    body: unknown,
+    options: RequestOptions = {},
+): Promise<T> {
+    return sendJson<T>('PUT', url, body, options);
+}
+
+async function sendJson<T>(
+    method: 'POST' | 'PUT',
+    url: string,
+    body: unknown,
+    { keepalive = false }: RequestOptions,
+): Promise<T> {
     const response = await fetch(url, {
-        method: 'POST',
+        method,
+        keepalive,
         credentials: 'same-origin',
         headers: {
             Accept: 'application/json',

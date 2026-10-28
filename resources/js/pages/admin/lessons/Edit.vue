@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Form, Head, router } from '@inertiajs/vue3';
-import { Trash2 } from '@lucide/vue';
+import { Form, Head, Link, router } from '@inertiajs/vue3';
+import { Eye, Trash2 } from '@lucide/vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import InputError from '@/components/InputError.vue';
 import LessonAttachmentsManager from '@/components/LessonAttachmentsManager.vue';
@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { edit as editCourse, index as courses } from '@/routes/admin/courses';
 import { destroy, edit, update } from '@/routes/admin/lessons';
+import { show as showLesson } from '@/routes/lessons';
 import type {
     AdminAttachment,
     AdminLesson,
@@ -57,6 +58,14 @@ function removeLesson(close: () => void): void {
                     {{ lesson.title }}
                 </h1>
                 <StatusBadge :status="lesson.status" />
+                <Button variant="outline" size="sm" class="ml-auto" as-child>
+                    <Link
+                        :href="showLesson([lesson.course.slug, lesson.slug])"
+                        data-test="preview-lesson-link"
+                    >
+                        <Eye /> Ver como aluno
+                    </Link>
+                </Button>
             </div>
         </div>
 
