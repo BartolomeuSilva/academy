@@ -19,7 +19,9 @@ x-app: &app
         DB_PORT: 5432
         REDIS_HOST: redis
         REDIS_PORT: 6379
+        # O servidor fala com o S3 pela rede do compose; as URLs assinadas usam a porta publicada.
         AWS_ENDPOINT: http://s3:9000
+        AWS_PUBLIC_ENDPOINT: http://localhost:${FORWARD_S3_PORT:-9000}
         MAIL_HOST: mailpit
         MAIL_PORT: 1025
     depends_on:

@@ -49,14 +49,15 @@ Convenções: chaves `bigint` auto-incremento, `timestamps()` em todas, nomes em
 
 ### lessons
 
-| Coluna      | Tipo         | Observação                              |
-| ----------- | ------------ | --------------------------------------- |
-| module_id   | fk cascade   |                                         |
-| title       | string(150)  |                                         |
-| slug        | string       | Único por curso (validado na aplicação) |
-| description | text null    | Markdown simples                        |
-| status      | string       | `PublicationStatus`                     |
-| position    | unsigned int | Índice `(module_id, position)`          |
+| Coluna      | Tipo         | Observação                                                   |
+| ----------- | ------------ | ------------------------------------------------------------ |
+| course_id   | fk cascade   | Desnormalizado: slug único por curso e consultas do catálogo |
+| module_id   | fk cascade   |                                                              |
+| title       | string(150)  |                                                              |
+| slug        | string       | Único por curso (índice `(course_id, slug)`)                 |
+| description | text null    | Markdown simples                                             |
+| status      | string       | `PublicationStatus`                                          |
+| position    | unsigned int | Índice `(module_id, position)`                               |
 
 ### videos
 

@@ -2,9 +2,15 @@
 
 namespace App\Providers;
 
+use App\Filesystem\PublicEndpointS3Adapter;
 use Carbon\CarbonImmutable;
+use Illuminate\Contracts\Filesystem\Cloud;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Filesystem\AwsS3V3Adapter;
+use Illuminate\Filesystem\FilesystemManager;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -24,6 +30,25 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configurePublicStorageUrls();
+    }
+
+    /**
+     * Sign temporary S3 URLs for the public endpoint when the app reaches storage through another address.
+     */
+    protected function configurePublicStorageUrls(): void
+    {
+        Storage::extend('s3', function (Application $app, array $config): Cloud {
+            /** @var FilesystemManager $filesystem */
+            $filesystem = $app->make('filesystem');
+            $disk = $filesystem->createS3Driver($config);
+
+            if (! $disk instanceof AwsS3V3Adapter || empty($config['public_endpoint']) || ! is_string($config['public_endpoint'])) {
+                return $disk;
+            }
+
+            return PublicEndpointS3Adapter::fromDisk($disk, $config['public_endpoint']);
+        });
     }
 
     /**

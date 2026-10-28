@@ -1,0 +1,54 @@
+export type PublicationStatus = 'draft' | 'published';
+
+export type AttachmentKind = 'image' | 'pdf';
+
+export type AdminCourseListItem = {
+    id: number;
+    title: string;
+    summary: string;
+    status: PublicationStatus;
+    cover_url: string | null;
+    modules_count: number;
+    lessons_count: number;
+};
+
+export type AdminCourse = {
+    id: number;
+    title: string;
+    slug: string;
+    summary: string;
+    description: string | null;
+    status: PublicationStatus;
+    cover_url: string | null;
+};
+
+export type AdminLessonListItem = {
+    id: number;
+    title: string;
+    status: PublicationStatus;
+    attachments_count: number;
+};
+
+export type AdminModule = {
+    id: number;
+    title: string;
+    lessons: AdminLessonListItem[];
+};
+
+export type AdminLesson = {
+    id: number;
+    title: string;
+    slug: string;
+    description: string | null;
+    status: PublicationStatus;
+    module: { id: number; title: string };
+    course: { id: number; title: string };
+};
+
+export type AdminAttachment = {
+    id: number;
+    kind: AttachmentKind;
+    original_name: string;
+    size: number;
+    url: string;
+};

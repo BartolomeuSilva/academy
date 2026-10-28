@@ -17,11 +17,12 @@ Cada fase termina com tudo testado, todos os gates verdes e deploy em produção
 
 ## Fase 1 — Administração de conteúdo
 
-- [ ] Migrations, models, factories e enums: courses, modules, lessons, lesson_attachments
-- [ ] CRUD de cursos com capa e publicação (US-10)
-- [ ] Módulos e aulas com reordenação drag & drop (US-11)
-- [ ] Anexos de imagem e PDF (US-13)
-- [ ] Exclusão em cascata com limpeza no MinIO
+- [x] Migrations, models, factories e enums: courses, modules, lessons, lesson_attachments
+- [x] CRUD de cursos com capa e publicação (US-10)
+- [x] Módulos e aulas com reordenação drag & drop (US-11)
+- [x] Anexos de imagem e PDF (US-13)
+- [x] Exclusão em cascata com limpeza no MinIO (job `DeleteStoragePaths`)
+- [x] Publicação da aula fica para a Fase 2 (exige vídeo pronto)
 
 ## Fase 2 — Pipeline de vídeo
 

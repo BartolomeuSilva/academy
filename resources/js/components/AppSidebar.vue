@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
-import { LayoutGrid } from '@lucide/vue';
+import { Link, usePage } from '@inertiajs/vue3';
+import { GraduationCap, LayoutGrid } from '@lucide/vue';
+import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
@@ -14,6 +15,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import { index as adminCourses } from '@/routes/admin/courses';
 import type { NavItem } from '@/types';
 
 const dashboardUrl = dashboard().url;
@@ -25,6 +27,20 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
 ];
+
+const page = usePage();
+
+const adminNavItems = computed<NavItem[]>(() =>
+    page.props.auth.user?.role === 'admin'
+        ? [
+              {
+                  title: 'Cursos',
+                  href: adminCourses(),
+                  icon: GraduationCap,
+              },
+          ]
+        : [],
+);
 </script>
 
 <template>
@@ -43,6 +59,11 @@ const mainNavItems: NavItem[] = [
 
         <SidebarContent>
             <NavMain :items="mainNavItems" />
+            <NavMain
+                v-if="adminNavItems.length"
+                :items="adminNavItems"
+                label="Administração"
+            />
         </SidebarContent>
 
         <SidebarFooter>

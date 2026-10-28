@@ -61,6 +61,8 @@ docker compose --profile prod up -d --build   # imagem de produção em http://l
 
 O perfil `prod` sobe `app`, `horizon`, `scheduler` e `video-worker` a partir do mesmo `Dockerfile` usado no deploy — é o teste de fumaça local antes de publicar.
 
+**Endereço do S3:** `AWS_ENDPOINT` é o endereço que o servidor usa para falar com o storage; `AWS_PUBLIC_ENDPOINT` (opcional) é o endereço usado nas URLs assinadas que vão para o navegador. Localmente o servidor usa `http://s3:9000` e o navegador `http://localhost:9000`. Em produção basta `AWS_ENDPOINT=https://storage.ichatbot.com.br`; se um dia o MinIO for acessado pela rede interna do Swarm, aponte `AWS_ENDPOINT` para o serviço interno e `AWS_PUBLIC_ENDPOINT` para o domínio público.
+
 ## 4.4 Stack de produção (`deploy/stack.yml`)
 
 O arquivo completo está em `deploy/stack.yml`. Resumo:
