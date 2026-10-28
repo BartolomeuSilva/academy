@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
-import { CirclePlay } from '@lucide/vue';
+import { Head, Link, usePage } from '@inertiajs/vue3';
+import { CirclePlay, Pencil } from '@lucide/vue';
 import { computed } from 'vue';
 import CourseOutline from '@/components/CourseOutline.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
 import { Button } from '@/components/ui/button';
 import { formatTotalDuration } from '@/lib/format';
+import { edit as editCourse } from '@/routes/admin/courses';
 import { index, show } from '@/routes/courses';
 import { show as showLesson } from '@/routes/lessons';
 import type {
@@ -22,6 +23,8 @@ const props = defineProps<{
     progress: CourseProgress;
     resume: ResumeLesson | null;
 }>();
+
+const isAdmin = computed(() => usePage().props.auth.user?.role === 'admin');
 
 defineOptions({
     layout: (props: { course: CourseDetails }) => ({
@@ -93,19 +96,32 @@ const resumeLabel = computed(() => {
                     </p>
                 </div>
 
-                <div v-if="resume">
-                    <Button as-child>
-                        <Link
-                            :href="
-                                showLesson([course.slug, resume.lesson.slug])
-                            "
-                            data-test="resume-course-link"
-                        >
-                            <CirclePlay /> {{ resumeLabel }}
-                        </Link>
-                    </Button>
+                <div v-if="resume || isAdmin">
+                    <div class="flex flex-wrap gap-2">
+                        <Button v-if="resume" as-child>
+                            <Link
+                                :href="
+                                    showLesson([
+                                        course.slug,
+                                        resume.lesson.slug,
+                                    ])
+                                "
+                                data-test="resume-course-link"
+                            >
+                                <CirclePlay /> {{ resumeLabel }}
+                            </Link>
+                        </Button>
+                        <Button v-if="isAdmin" variant="outline" as-child>
+                            <Link
+                                :href="editCourse(course.id)"
+                                data-test="edit-course-link"
+                            >
+                                <Pencil /> Editar curso
+                            </Link>
+                        </Button>
+                    </div>
                     <p
-                        v-if="resume.started"
+                        v-if="resume?.started"
                         class="mt-2 text-sm text-muted-foreground"
                     >
                         Próxima aula: {{ resume.lesson.title }}

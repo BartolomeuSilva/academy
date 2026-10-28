@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { GraduationCap, GripVertical, Plus } from '@lucide/vue';
+import { GraduationCap, GripVertical, Pencil, Plus } from '@lucide/vue';
 import { ref, watch } from 'vue';
 import { VueDraggable } from 'vue-draggable-plus';
 import Heading from '@/components/Heading.vue';
@@ -115,6 +115,17 @@ function saveOrder(): void {
                 </div>
 
                 <StatusBadge :status="course.status" />
+
+                <Button variant="outline" size="sm" as-child>
+                    <Link
+                        :href="edit(course.id)"
+                        :aria-label="`Editar o curso ${course.title}`"
+                        data-test="edit-course-link"
+                    >
+                        <Pencil />
+                        <span class="hidden sm:inline">Editar</span>
+                    </Link>
+                </Button>
             </div>
         </VueDraggable>
     </div>

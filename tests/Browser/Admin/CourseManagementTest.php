@@ -29,6 +29,26 @@ test('an admin builds a course with a module and a lesson', function () {
     expect($lesson->course->title)->toBe('Onboarding');
 });
 
+test('an admin opens a course for editing from the list and from the course page', function () {
+    Storage::fake();
+    $course = Course::factory()->create(['title' => 'Segurança']);
+    $this->actingAs(User::factory()->admin()->create());
+
+    visit('/admin/cursos')
+        ->click('@edit-course-link')
+        ->assertPathIs("/admin/cursos/{$course->id}/editar")
+        ->fill('title', 'Segurança da Informação')
+        ->click('@save-course-button')
+        ->assertSee('Curso atualizado.')
+        ->assertNoJavaScriptErrors();
+
+    expect($course->fresh()->title)->toBe('Segurança da Informação');
+
+    visit("/cursos/{$course->slug}")
+        ->click('@edit-course-link')
+        ->assertPathIs("/admin/cursos/{$course->id}/editar");
+});
+
 test('admin pages have no accessibility issues in light and dark mode', function () {
     Storage::fake();
     $this->actingAs(User::factory()->admin()->create());
