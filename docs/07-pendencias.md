@@ -13,15 +13,14 @@
 | Repositório     | https://github.com/BartolomeuSilva/academy                            |
 | vCPUs           | 4 (worker de vídeo limitado a 2)                                      |
 | Vídeo original  | Apagado após a conversão                                              |
-| MinIO no Swarm  | Sim (nome do serviço e rede pendentes)                                |
+| MinIO no Swarm  | Serviço `minio_minio` na rede `network_public` (porta 9000)           |
 
 ## 7.2 Ainda em aberto
 
-| #   | Pergunta                                                                                                                                                                                                | Impacto                      | Necessário em                                                |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------ |
-| 1   | Nome do **entrypoint HTTPS** e do **certresolver** do Traefik (ver labels de outro serviço: `docker service inspect <serviço> --format '{{json .Spec.Labels}}'`)                                        | Labels do `stack.yml`        | Primeiro deploy                                              |
-| 3   | MinIO está no mesmo Swarm: qual o **nome do serviço** e da **rede overlay**? Com isso o servidor acessa o MinIO pela rede interna (`AWS_ENDPOINT`), mantendo o domínio público só nas URLs do navegador | Tráfego e latência do worker | Antes do primeiro deploy (opcional)                          |
-| 4   | SMTP: porta, criptografia (TLS/SSL), usuário e remetente (`MAIL_FROM_ADDRESS`)                                                                                                                          | E-mails de verificação/reset | Primeiro deploy (vão como secrets, não precisam vir no chat) |
+| #   | Pergunta                                                                                                                                                         | Impacto                      | Necessário em                                                |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------ |
+| 1   | Nome do **entrypoint HTTPS** e do **certresolver** do Traefik (ver labels de outro serviço: `docker service inspect <serviço> --format '{{json .Spec.Labels}}'`) | Labels do `stack.yml`        | Primeiro deploy                                              |
+| 4   | SMTP: porta, criptografia (TLS/SSL), usuário e remetente (`MAIL_FROM_ADDRESS`)                                                                                   | E-mails de verificação/reset | Primeiro deploy (vão como secrets, não precisam vir no chat) |
 
 ## 7.3 Premissas (confirmadas em 27/10/2026)
 

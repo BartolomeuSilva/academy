@@ -12,13 +12,15 @@ x-app-env: &app-env
     LOG_CHANNEL: stderr
     LOG_LEVEL: warning
     DB_CONNECTION: pgsql
-    DB_HOST: postgres
+    # Nomes completos (stack_serviço): o app também está na network_public, onde
+    # "postgres"/"redis" de outras stacks poderiam responder pelo nome curto.
+    DB_HOST: academy_postgres
     DB_PORT: 5432
     DB_DATABASE: academy
     DB_USERNAME: academy
     DB_PASSWORD_FILE: /run/secrets/academy_db_password
     REDIS_CLIENT: phpredis
-    REDIS_HOST: redis
+    REDIS_HOST: academy_redis
     REDIS_PORT: 6379
     REDIS_PASSWORD_FILE: /run/secrets/academy_redis_password
     CACHE_STORE: redis
@@ -30,9 +32,9 @@ x-app-env: &app-env
     AWS_SECRET_ACCESS_KEY_FILE: /run/secrets/academy_s3_secret
     AWS_DEFAULT_REGION: us-east-1
     AWS_BUCKET: academy
-        # Endereço usado pelo servidor (pode ser o serviço interno do MinIO no Swarm)
-    # e endereço público usado nas URLs que vão para o navegador.
-    AWS_ENDPOINT: ${AWS_ENDPOINT:-https://storage.ichatbot.com.br}
+    # O servidor fala com o MinIO pela network_public (serviço minio_minio);
+    # o navegador recebe URLs assinadas com o domínio público.
+    AWS_ENDPOINT: ${AWS_ENDPOINT:-http://minio_minio:9000}
     AWS_PUBLIC_ENDPOINT: https://storage.ichatbot.com.br
     AWS_USE_PATH_STYLE_ENDPOINT: 'true'
     MAIL_MAILER: smtp
@@ -56,7 +58,7 @@ x-app-base: &app-base
     image: ghcr.io/bartolomeusilva/academy:${IMAGE_TAG:?defina IMAGE_TAG}
     environment: *app-env
     secrets: *app-secrets
-    networks: [internal]
+    networks: [internal, network_public]
 
 x-update: &rolling-update
     parallelism: 1
@@ -71,7 +73,6 @@ services:
             <<: *app-env
             AUTORUN_ENABLED: 'true'
             AUTORUN_LARAVEL_MIGRATION_ISOLATION: 'true'
-        networks: [internal, network_public]
         deploy:
             replicas: 2
             update_config: *rolling-update

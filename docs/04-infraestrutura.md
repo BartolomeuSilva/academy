@@ -61,7 +61,9 @@ docker compose --profile prod up -d --build   # imagem de produção em http://l
 
 O perfil `prod` sobe `app`, `horizon`, `scheduler` e `video-worker` a partir do mesmo `Dockerfile` usado no deploy — é o teste de fumaça local antes de publicar.
 
-**Endereço do S3:** `AWS_ENDPOINT` é o endereço que o servidor usa para falar com o storage; `AWS_PUBLIC_ENDPOINT` (opcional) é o endereço usado nas URLs assinadas que vão para o navegador. Localmente o servidor usa `http://s3:9000` e o navegador `http://localhost:9000`. Em produção basta `AWS_ENDPOINT=https://storage.ichatbot.com.br`; se um dia o MinIO for acessado pela rede interna do Swarm, aponte `AWS_ENDPOINT` para o serviço interno e `AWS_PUBLIC_ENDPOINT` para o domínio público.
+**Endereço do S3:** `AWS_ENDPOINT` é o endereço que o servidor usa para falar com o storage; `AWS_PUBLIC_ENDPOINT` (opcional) é o endereço usado nas URLs assinadas que vão para o navegador. Localmente o servidor usa `http://s3:9000` e o navegador `http://localhost:9000`. Em produção o servidor usa o serviço interno `http://minio_minio:9000` (o MinIO está na `network_public`, à qual todos os serviços do app estão ligados) e o navegador `https://storage.ichatbot.com.br`. Para voltar ao domínio público, defina `AWS_ENDPOINT=https://storage.ichatbot.com.br` em `academy.env`.
+
+**Nomes de serviço:** como o app compartilha a `network_public` com outras stacks, Postgres e Redis são acessados pelos nomes completos `academy_postgres` e `academy_redis`, evitando colisão com serviços de mesmo nome curto de outras stacks.
 
 ## 4.4 Stack de produção (`deploy/stack.yml`)
 
@@ -77,13 +79,14 @@ services:
             APP_ENV: production
             APP_URL: https://academy.sempertechnology.com.br
             DB_CONNECTION: pgsql
-            DB_HOST: postgres
-            REDIS_HOST: redis
+            DB_HOST: academy_postgres
+            REDIS_HOST: academy_redis
             CACHE_STORE: redis
             SESSION_DRIVER: redis
             QUEUE_CONNECTION: redis
             FILESYSTEM_DISK: s3
-            AWS_ENDPOINT: https://storage.ichatbot.com.br
+            AWS_ENDPOINT: http://minio_minio:9000
+            AWS_PUBLIC_ENDPOINT: https://storage.ichatbot.com.br
             AWS_USE_PATH_STYLE_ENDPOINT: 'true'
         networks: [internal, network_public]
         healthcheck:
