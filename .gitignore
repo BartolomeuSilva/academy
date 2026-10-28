@@ -45,3 +45,6 @@ yarn-error.log
 /opencode.jsonc
 /tests/Browser/Screenshots
 /tests/Browser/Traces
+
+# Arquivos locais de outras stacks (contêm credenciais)
+compose-base.yml
