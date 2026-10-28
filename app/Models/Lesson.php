@@ -33,6 +33,7 @@ use Illuminate\Support\Str;
  * @property-read Video|null $video
  * @property-read Collection<int, Video> $videos
  * @property-read Collection<int, LessonProgress> $progress
+ * @property-read Collection<int, Comment> $comments
  */
 #[Fillable(['title', 'slug', 'description'])]
 class Lesson extends Model
@@ -102,6 +103,14 @@ class Lesson extends Model
     public function progress(): HasMany
     {
         return $this->hasMany(LessonProgress::class);
+    }
+
+    /**
+     * @return HasMany<Comment, $this>
+     */
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
     }
 
     /**

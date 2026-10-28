@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\BuildCourseOutline;
+use App\Actions\ListLessonComments;
 use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\LessonAttachment;
@@ -19,9 +20,14 @@ class LessonController extends Controller
     private const int RESTART_WITHIN_SECONDS = 15;
 
     /**
+     * Root comments shown at first and added by each "carregar mais".
+     */
+    public const int COMMENTS_PER_PAGE = 10;
+
+    /**
      * Show the lesson player, materials and the course outline.
      */
-    public function show(Request $request, Course $course, Lesson $lesson, BuildCourseOutline $buildCourseOutline): Response
+    public function show(Request $request, Course $course, Lesson $lesson, BuildCourseOutline $buildCourseOutline, ListLessonComments $listLessonComments): Response
     {
         $user = $request->user();
         abort_unless($user->can('view', $lesson), 404);
@@ -65,7 +71,18 @@ class LessonController extends Controller
             'modules' => $outline['modules'],
             'previous_lesson' => $neighbour(-1),
             'next_lesson' => $neighbour(1),
+            'comments' => fn () => $listLessonComments->handle($lesson, $user, $this->commentsLimit($request)),
         ]);
+    }
+
+    /**
+     * Number of root comments to show, grown by "carregar mais" through the `comentarios` query parameter.
+     */
+    private function commentsLimit(Request $request): int
+    {
+        $requested = $request->integer('comentarios', self::COMMENTS_PER_PAGE);
+
+        return min(max($requested, self::COMMENTS_PER_PAGE), 50 * self::COMMENTS_PER_PAGE);
     }
 
     private function startAt(?LessonProgress $progress, ?int $durationSeconds): int

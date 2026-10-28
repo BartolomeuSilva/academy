@@ -76,3 +76,23 @@ export type AdminPendingVideo = {
     original_name: string;
     error_message: string | null;
 };
+
+export type AdminComment = {
+    id: number;
+    body: string;
+    author: string;
+    is_reply: boolean;
+    edited: boolean;
+    created_at: string | null;
+    lesson: { slug: string; title: string };
+    course: { slug: string; title: string };
+};
+
+export type Paginated<T> = {
+    data: T[];
+    current_page: number;
+    last_page: number;
+    total: number;
+    prev_page_url: string | null;
+    next_page_url: string | null;
+};

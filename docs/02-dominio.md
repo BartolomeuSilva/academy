@@ -121,7 +121,7 @@ Convenções: chaves `bigint` auto-incremento, `timestamps()` em todas, nomes em
 4. **Ordenação**: `position` é reescrita em lote dentro de transação ao reordenar.
 5. **Exclusão** de curso/módulo/aula/vídeo/anexo dispara job `DeleteStoragePrefix` para remover arquivos do MinIO após o commit.
 6. **Progresso**: concluída quando `last_position_seconds >= 0.9 × duration_seconds` ou marcação manual. % do curso = aulas visíveis concluídas / aulas visíveis.
-7. **Comentários**: resposta só a comentário raiz; editar/excluir só o autor; Admin exclui qualquer um.
+7. **Comentários**: resposta só a comentário raiz (não removido) da mesma aula; editar só o autor; excluir o autor ou um Admin. Quando o **autor** exclui o próprio comentário raiz que tem respostas, ele vira "Comentário removido" e as respostas ficam; quando um **Admin modera** o comentário raiz de outra pessoa, as respostas são removidas junto. Limite de 10 comentários por minuto por usuário. Lista: raízes mais recentes primeiro (10 por vez, "carregar mais"), respostas da mais antiga para a mais nova.
 8. **Usuário bloqueado**: login negado e sessões invalidadas no próximo request (middleware).
 9. **Sempre existe ≥ 1 Admin**; admin não altera o próprio papel nem se bloqueia.
 

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\LessonAttachmentController;
+use App\Http\Controllers\LessonCommentController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\LessonProgressController;
 use App\Http\Controllers\VideoPlaylistController;
@@ -23,6 +24,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('aulas/{lesson}/progresso', [LessonProgressController::class, 'update'])
         ->middleware('throttle:120,1')
         ->name('lessons.progress.update');
+
+    Route::post('aulas/{lesson}/comentarios', [LessonCommentController::class, 'store'])
+        ->middleware('throttle:comments')
+        ->name('lessons.comments.store');
+    Route::scopeBindings()->group(function () {
+        Route::patch('aulas/{lesson}/comentarios/{comment}', [LessonCommentController::class, 'update'])->name('lessons.comments.update');
+        Route::delete('aulas/{lesson}/comentarios/{comment}', [LessonCommentController::class, 'destroy'])->name('lessons.comments.destroy');
+    });
 
     Route::get('anexos/{attachment}', [LessonAttachmentController::class, 'show'])->name('attachments.show');
 

@@ -44,3 +44,13 @@ export function formatTotalDuration(totalSeconds: number): string {
         ? `${hours} h`
         : `${hours} h ${String(minutes).padStart(2, '0')} min`;
 }
+
+/**
+ * Format an ISO date as a short Brazilian date and time (e.g. "28/10/2026, 14:30").
+ */
+export function formatDateTime(isoDate: string): string {
+    return new Date(isoDate).toLocaleString('pt-BR', {
+        dateStyle: 'short',
+        timeStyle: 'short',
+    });
+}

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\CommentController;
 use App\Http\Controllers\Admin\CourseController;
 use App\Http\Controllers\Admin\CourseCoverController;
 use App\Http\Controllers\Admin\CourseOrderController;
@@ -48,4 +49,7 @@ Route::middleware(['auth', 'verified', 'admin'])
         Route::put('aulas/{lesson}/anexos/ordem', [LessonAttachmentOrderController::class, 'update'])->name('lessons.attachments.order');
         Route::put('anexos/{attachment}', [LessonAttachmentController::class, 'update'])->name('attachments.update');
         Route::delete('anexos/{attachment}', [LessonAttachmentController::class, 'destroy'])->name('attachments.destroy');
+
+        Route::get('comentarios', [CommentController::class, 'index'])->name('comments.index');
+        Route::delete('comentarios/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
     });

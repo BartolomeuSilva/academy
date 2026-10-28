@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { GraduationCap, BookOpen } from '@lucide/vue';
+import { BookOpen, GraduationCap, MessageSquare } from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -15,6 +15,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { index as catalog } from '@/routes/courses';
+import { index as adminComments } from '@/routes/admin/comments';
 import { index as adminCourses } from '@/routes/admin/courses';
 import type { NavItem } from '@/types';
 
@@ -37,6 +38,11 @@ const adminNavItems = computed<NavItem[]>(() =>
                   title: 'Cursos',
                   href: adminCourses(),
                   icon: GraduationCap,
+              },
+              {
+                  title: 'Comentários',
+                  href: adminComments(),
+                  icon: MessageSquare,
               },
           ]
         : [],

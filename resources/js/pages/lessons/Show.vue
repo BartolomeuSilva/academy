@@ -11,6 +11,7 @@ import {
 } from '@lucide/vue';
 import { ref, watch } from 'vue';
 import CourseOutline from '@/components/CourseOutline.vue';
+import LessonComments from '@/components/LessonComments.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,6 +26,7 @@ import { formatBytes } from '@/lib/format';
 import { index, show as showCourse } from '@/routes/courses';
 import { show } from '@/routes/lessons';
 import type {
+    LessonComments as LessonCommentsData,
     LessonDetails,
     LessonMaterial,
     LessonProgressState,
@@ -44,6 +46,7 @@ const props = defineProps<{
     modules: OutlineModule[];
     previous_lesson: OutlineLesson | null;
     next_lesson: OutlineLesson | null;
+    comments: LessonCommentsData;
 }>();
 
 defineOptions({
@@ -223,6 +226,8 @@ const viewedImage = ref<LessonMaterial | null>(null);
                     </li>
                 </ul>
             </section>
+
+            <LessonComments :lesson-id="lesson.id" :comments="comments" />
         </div>
 
         <aside

@@ -41,8 +41,8 @@ Cada fase termina com tudo testado, todos os gates verdes e deploy em produção
 
 ## Fase 4 — Comentários
 
-- [ ] Comentários e respostas com rate limit (US-06)
-- [ ] Moderação no admin (US-15)
+- [x] Comentários e respostas com rate limit (US-06)
+- [x] Moderação no admin (US-15)
 
 ## Fase 5 — Gestão e polimento
 

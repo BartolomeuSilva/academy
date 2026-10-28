@@ -73,3 +73,24 @@ export type LessonMaterial = {
     url: string;
     download_url: string;
 };
+
+export type LessonComment = {
+    id: number;
+    body: string | null;
+    author: string | null;
+    created_at: string | null;
+    edited: boolean;
+    deleted: boolean;
+    can_update: boolean;
+    can_delete: boolean;
+};
+
+export type LessonRootComment = LessonComment & {
+    replies: LessonComment[];
+};
+
+export type LessonComments = {
+    data: LessonRootComment[];
+    has_more: boolean;
+    total: number;
+};
