@@ -91,7 +91,8 @@ sequenceDiagram
 - **Escada**: 480p (0,8 Mbps), 720p (2,0 Mbps), 1080p (3,5 Mbps) — tetos (`-maxrate`) com CRF 23; conteúdo de tela/slides costuma ficar bem abaixo. Ver estimativa de disco em [Infraestrutura §4.7](04-infraestrutura.md#47-capacidade-da-vps).
 - **Job `EncodeVideo`**: fila `video`, `timeout` 2 h (vídeo de 1 h com 2 vCPUs leva ~30–60 min), `tries` 2, `ShouldBeUnique` por vídeo, `failed()` grava `error_message` e status `failed`. Disco temporário em volume dedicado, limpo no `finally`.
 - **Worker**: serviço Swarm separado, 1 réplica, `queue:work`/Horizon supervisor só da fila `video`, `-threads` do FFmpeg e `limits.cpus` do Swarm limitados para não afetar os outros apps da VPS.
-- **Original**: política definida em [Pendências](07-pendencias.md) (manter para reprocessar × apagar após encoding para poupar disco).
+- **Original**: apagado após a conversão bem-sucedida (e também em caso de falha) para poupar disco. Não há reprocessamento: para trocar ou corrigir, o admin envia o vídeo novamente.
+- **Limite de CPU**: VPS com 4 vCPUs — `video-worker` limitado a 2 CPUs no Swarm e FFmpeg com `-threads 2`.
 
 ### Reprodução protegida
 

@@ -24,6 +24,7 @@ x-app: &app
         AWS_PUBLIC_ENDPOINT: http://localhost:${FORWARD_S3_PORT:-9000}
         MAIL_HOST: mailpit
         MAIL_PORT: 1025
+        VIDEO_UPLOAD_PART_BYTES: ${VIDEO_UPLOAD_PART_BYTES:-67108864}
     depends_on:
         pgsql: { condition: service_healthy }
         redis: { condition: service_healthy }
@@ -83,6 +84,8 @@ services:
                 for i in $$(seq 1 30); do aws --endpoint-url http://s3:9000 s3api list-buckets >/dev/null 2>&1 && break; sleep 1; done
                 aws --endpoint-url http://s3:9000 s3api head-bucket --bucket academy 2>/dev/null \
                   || aws --endpoint-url http://s3:9000 s3api create-bucket --bucket academy
+                aws --endpoint-url http://s3:9000 s3api put-bucket-cors --bucket academy --cors-configuration \
+                  '{"CORSRules":[{"AllowedOrigins":["http://localhost:8080","http://localhost:8000"],"AllowedMethods":["GET","PUT","HEAD"],"AllowedHeaders":["*"],"ExposeHeaders":["ETag"],"MaxAgeSeconds":3600}]}'
         restart: 'no'
 
     mailpit:
@@ -120,10 +123,13 @@ services:
             context: .
             target: video-worker
         image: academy-video-worker:local
+        volumes:
+            - video-work:/var/www/html/storage/app/video-work
         healthcheck:
             disable: true
 
 volumes:
+    video-work:
     pgsql-data:
     redis-data:
     s3-data:

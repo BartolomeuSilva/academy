@@ -40,7 +40,7 @@ O primeiro Admin (`contato@bartolomeusilva.com`) é criado via comando `php arti
 - **Cursos**: criar, editar, excluir, publicar/despublicar, capa (imagem), ordenar no catálogo.
 - **Módulos**: criar, editar, excluir, reordenar (drag & drop).
 - **Aulas**: criar, editar, excluir, mover entre módulos, reordenar, publicar/despublicar.
-- **Vídeo da aula**: upload direto para o MinIO (multipart, com barra de progresso e retomada), acompanhamento do status (enviando → na fila → processando → pronto / falhou), reprocessar, substituir.
+- **Vídeo da aula**: upload direto para o MinIO (multipart, com barra de progresso e retomada), acompanhamento do status (enviando → na fila → processando → pronto / falhou), substituir. O original é apagado após a conversão.
 - **Anexos**: upload de imagens (JPG, PNG, WEBP) e PDF, renomear, reordenar, excluir.
 - **Usuários**: listar, buscar, promover a Admin / rebaixar a Aluno, bloquear/desbloquear.
 - **Comentários**: lista geral recente com filtro por curso, excluir.
@@ -115,7 +115,7 @@ Cada critério abaixo vira pelo menos um teste automatizado (feature ou browser)
 - Upload vai direto do navegador ao MinIO em partes; falha de rede permite retomar.
 - Aceita MP4, MOV, MKV, WEBM até 2 GB; o worker rejeita (status "falhou") vídeos com mais de 1 h.
 - Após o upload, o status muda para "na fila" e depois "processando"; ao terminar, "pronto" com duração preenchida.
-- Em falha, status "falhou" com mensagem e botão "reprocessar".
+- Em falha, status "falhou" com mensagem; o admin envia o arquivo novamente.
 - Aula só pode ser publicada com vídeo "pronto".
 
 **US-13 — Anexos**: anexar imagens e PDFs (até 50 MB cada) a uma aula.

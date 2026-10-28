@@ -52,3 +52,27 @@ export type AdminAttachment = {
     size: number;
     url: string;
 };
+
+export type VideoStatus =
+    | 'uploading'
+    | 'queued'
+    | 'processing'
+    | 'ready'
+    | 'failed';
+
+export type AdminLessonVideo = {
+    id: number;
+    original_name: string;
+    duration_seconds: number | null;
+    renditions: string[];
+    poster_url: string | null;
+    playlist_url: string;
+    processed_at: string | null;
+};
+
+export type AdminPendingVideo = {
+    id: number;
+    status: VideoStatus;
+    original_name: string;
+    error_message: string | null;
+};

@@ -74,7 +74,8 @@ FROM app AS video-worker
 USER root
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && install -d -o www-data -g www-data /var/www/html/storage/app/video-work
 USER www-data
 
 CMD ["php", "/var/www/html/artisan", "queue:work", "redis-video", "--queue=video", "--timeout=7200", "--tries=2", "--sleep=3"]

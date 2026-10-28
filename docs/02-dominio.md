@@ -53,6 +53,7 @@ Convenções: chaves `bigint` auto-incremento, `timestamps()` em todas, nomes em
 | ----------- | ------------ | ------------------------------------------------------------ |
 | course_id   | fk cascade   | Desnormalizado: slug único por curso e consultas do catálogo |
 | module_id   | fk cascade   |                                                              |
+| video_id    | fk null      | Vídeo atual servido aos alunos (troca atômica ao substituir) |
 | title       | string(150)  |                                                              |
 | slug        | string       | Único por curso (índice `(course_id, slug)`)                 |
 | description | text null    | Markdown simples                                             |
@@ -63,7 +64,7 @@ Convenções: chaves `bigint` auto-incremento, `timestamps()` em todas, nomes em
 
 | Coluna                               | Tipo                 | Observação                                                            |
 | ------------------------------------ | -------------------- | --------------------------------------------------------------------- |
-| lesson_id                            | fk cascade unique    | 1:1 com a aula                                                        |
+| lesson_id                            | fk cascade           | Uma aula pode ter vários vídeos (atual, em envio ou com falha)        |
 | uuid                                 | uuid unique          | Prefixo das chaves no MinIO                                           |
 | status                               | string               | `VideoStatus`: `uploading`, `queued`, `processing`, `ready`, `failed` |
 | original_path                        | string null          | `videos/{uuid}/original.{ext}`                                        |
@@ -115,7 +116,7 @@ Convenções: chaves `bigint` auto-incremento, `timestamps()` em todas, nomes em
 ## 2.3 Regras de negócio
 
 1. **Visibilidade para aluno**: curso `published` **e** aula `published` **e** vídeo `ready`. Caso contrário, 404.
-2. **Publicar aula** exige vídeo `ready`. Se o vídeo for substituído, a aula continua publicada servindo o vídeo antigo até o novo ficar `ready` (troca atômica do `uuid`); o antigo é apagado em seguida.
+2. **Publicar aula** exige vídeo `ready`. Ao substituir, a aula continua servindo o vídeo antigo até o novo ficar `ready`; então `lessons.video_id` passa para o novo e o antigo é apagado. O **original é apagado** após a conversão (decisão de 28/10/2026); em caso de falha, o admin envia o arquivo de novo.
 3. **Catálogo** mostra apenas cursos publicados com ≥ 1 aula visível.
 4. **Ordenação**: `position` é reescrita em lote dentro de transação ao reordenar.
 5. **Exclusão** de curso/módulo/aula/vídeo/anexo dispara job `DeleteStoragePrefix` para remover arquivos do MinIO após o commit.

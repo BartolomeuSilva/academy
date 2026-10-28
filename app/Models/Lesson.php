@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\PublicationStatus;
 use Database\Factories\LessonFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,6 +17,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $course_id
  * @property int $module_id
+ * @property int|null $video_id
  * @property string $title
  * @property string $slug
  * @property string|null $description
@@ -26,6 +28,8 @@ use Illuminate\Support\Carbon;
  * @property-read Course $course
  * @property-read Module $module
  * @property-read Collection<int, LessonAttachment> $attachments
+ * @property-read Video|null $video
+ * @property-read Collection<int, Video> $videos
  */
 #[Fillable(['title', 'slug', 'description'])]
 class Lesson extends Model
@@ -70,15 +74,65 @@ class Lesson extends Model
     }
 
     /**
+     * The encoded video currently served to students.
+     *
+     * @return BelongsTo<Video, $this>
+     */
+    public function video(): BelongsTo
+    {
+        return $this->belongsTo(Video::class);
+    }
+
+    /**
+     * Every video uploaded to the lesson, including pending and failed ones.
+     *
+     * @return HasMany<Video, $this>
+     */
+    public function videos(): HasMany
+    {
+        return $this->hasMany(Video::class);
+    }
+
+    /**
+     * Determine whether the lesson has a playable video.
+     */
+    public function hasPlayableVideo(): bool
+    {
+        return $this->video_id !== null;
+    }
+
+    /**
      * Get every storage path owned by the lesson.
      *
      * @return list<string>
      */
     public function storagePaths(): array
     {
-        return array_values($this->attachments()
+        return self::storagePathsFor(self::query()->whereKey($this->id));
+    }
+
+    /**
+     * Get every storage path owned by the lessons in the query: attachments and video directories.
+     *
+     * @param  Builder<Lesson>  $lessons
+     * @return list<string>
+     */
+    public static function storagePathsFor(Builder $lessons): array
+    {
+        $lessonIds = (clone $lessons)->select('id');
+
+        $attachmentPaths = LessonAttachment::query()
+            ->whereIn('lesson_id', $lessonIds)
             ->get(['path'])
-            ->map(fn (LessonAttachment $attachment) => $attachment->path)
-            ->all());
+            ->toBase()
+            ->map(fn (LessonAttachment $attachment) => $attachment->path);
+
+        $videoDirectories = Video::query()
+            ->whereIn('lesson_id', (clone $lessons)->select('id'))
+            ->get(['uuid'])
+            ->toBase()
+            ->map(fn (Video $video) => $video->directory());
+
+        return array_values($attachmentPaths->merge($videoDirectories)->all());
     }
 }

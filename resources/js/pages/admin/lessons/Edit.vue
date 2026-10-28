@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { Form, Head, router } from '@inertiajs/vue3';
-import { Trash2, Video } from '@lucide/vue';
+import { Trash2 } from '@lucide/vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import InputError from '@/components/InputError.vue';
 import LessonAttachmentsManager from '@/components/LessonAttachmentsManager.vue';
+import LessonVideoManager from '@/components/LessonVideoManager.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,10 +12,17 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { edit as editCourse, index as courses } from '@/routes/admin/courses';
 import { destroy, edit, update } from '@/routes/admin/lessons';
-import type { AdminAttachment, AdminLesson } from '@/types';
+import type {
+    AdminAttachment,
+    AdminLesson,
+    AdminLessonVideo,
+    AdminPendingVideo,
+} from '@/types';
 
 const props = defineProps<{
     lesson: AdminLesson;
+    video: AdminLessonVideo | null;
+    pending_video: AdminPendingVideo | null;
     attachments: AdminAttachment[];
 }>();
 
@@ -54,18 +62,11 @@ function removeLesson(close: () => void): void {
 
         <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
             <div class="space-y-6">
-                <section
-                    class="flex items-center gap-4 rounded-xl border border-dashed p-6 text-muted-foreground"
-                >
-                    <Video class="size-8 shrink-0" />
-                    <div>
-                        <p class="font-medium text-foreground">Vídeo da aula</p>
-                        <p class="text-sm">
-                            O envio de vídeo estará disponível em breve. A aula
-                            poderá ser publicada quando o vídeo estiver pronto.
-                        </p>
-                    </div>
-                </section>
+                <LessonVideoManager
+                    :lesson-id="lesson.id"
+                    :video="video"
+                    :pending-video="pending_video"
+                />
 
                 <LessonAttachmentsManager
                     :lesson-id="lesson.id"
@@ -116,6 +117,24 @@ function removeLesson(close: () => void): void {
                                 rows="6"
                             />
                             <InputError :message="errors.description" />
+                        </div>
+
+                        <div class="grid gap-2">
+                            <Label for="status">Status</Label>
+                            <select
+                                id="status"
+                                name="status"
+                                :value="lesson.status"
+                                class="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs dark:bg-input/30"
+                            >
+                                <option value="draft">Rascunho</option>
+                                <option value="published" :disabled="!video">
+                                    Publicado{{
+                                        video ? '' : ' (envie o vídeo primeiro)'
+                                    }}
+                                </option>
+                            </select>
+                            <InputError :message="errors.status" />
                         </div>
 
                         <Button

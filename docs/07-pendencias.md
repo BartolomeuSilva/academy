@@ -11,16 +11,17 @@
 | Primeiro Admin  | `contato@bartolomeusilva.com`                                         |
 | SMTP            | Host `mail.g5d.com.br`                                                |
 | Repositório     | https://github.com/BartolomeuSilva/academy                            |
+| vCPUs           | 4 (worker de vídeo limitado a 2)                                      |
+| Vídeo original  | Apagado após a conversão                                              |
+| MinIO no Swarm  | Sim (nome do serviço e rede pendentes)                                |
 
 ## 7.2 Ainda em aberto
 
-| #   | Pergunta                                                                                                                                                            | Impacto                                             | Necessário em                                                |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------ |
-| 1   | Nome do **entrypoint HTTPS** e do **certresolver** do Traefik (ver labels de outro serviço: `docker service inspect <serviço> --format '{{json .Spec.Labels}}'`)    | Labels do `stack.yml`                               | Primeiro deploy                                              |
-| 2   | Quantas **vCPUs** a VPS tem?                                                                                                                                        | Limite de CPU do `video-worker` e tempo de encoding | Fase 2                                                       |
-| 3   | O MinIO roda no mesmo Swarm? Se sim, em qual rede/serviço (para acesso interno sem sair pela internet)?                                                             | Latência e tráfego do worker                        | Fase 2 (opcional)                                            |
-| 4   | SMTP: porta, criptografia (TLS/SSL), usuário e remetente (`MAIL_FROM_ADDRESS`)                                                                                      | E-mails de verificação/reset                        | Primeiro deploy (vão como secrets, não precisam vir no chat) |
-| 5   | **Original do vídeo**: manter (permite reprocessar, ~770 MB/10 min) ou apagar após encoding (~470 MB/10 min)? Ver [§4.7](04-infraestrutura.md#47-capacidade-da-vps) | Capacidade de disco                                 | Fase 2                                                       |
+| #   | Pergunta                                                                                                                                                                                                | Impacto                      | Necessário em                                                |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------ |
+| 1   | Nome do **entrypoint HTTPS** e do **certresolver** do Traefik (ver labels de outro serviço: `docker service inspect <serviço> --format '{{json .Spec.Labels}}'`)                                        | Labels do `stack.yml`        | Primeiro deploy                                              |
+| 3   | MinIO está no mesmo Swarm: qual o **nome do serviço** e da **rede overlay**? Com isso o servidor acessa o MinIO pela rede interna (`AWS_ENDPOINT`), mantendo o domínio público só nas URLs do navegador | Tráfego e latência do worker | Antes do primeiro deploy (opcional)                          |
+| 4   | SMTP: porta, criptografia (TLS/SSL), usuário e remetente (`MAIL_FROM_ADDRESS`)                                                                                                                          | E-mails de verificação/reset | Primeiro deploy (vão como secrets, não precisam vir no chat) |
 
 ## 7.3 Premissas (confirmadas em 27/10/2026)
 

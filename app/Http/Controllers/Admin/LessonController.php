@@ -38,7 +38,12 @@ class LessonController extends Controller
      */
     public function edit(Lesson $lesson): Response
     {
-        $lesson->load(['course', 'module', 'attachments']);
+        $lesson->load(['course', 'module', 'attachments', 'video']);
+
+        $pendingVideo = $lesson->videos()
+            ->whereKeyNot($lesson->video_id ?? 0)
+            ->latest('id')
+            ->first();
 
         return Inertia::render('admin/lessons/Edit', [
             'lesson' => [
@@ -50,6 +55,21 @@ class LessonController extends Controller
                 'module' => ['id' => $lesson->module->id, 'title' => $lesson->module->title],
                 'course' => ['id' => $lesson->course->id, 'title' => $lesson->course->title],
             ],
+            'video' => $lesson->video ? [
+                'id' => $lesson->video->id,
+                'original_name' => $lesson->video->original_name,
+                'duration_seconds' => $lesson->video->duration_seconds,
+                'renditions' => array_column($lesson->video->renditions ?? [], 'name'),
+                'poster_url' => $lesson->video->posterUrl(),
+                'playlist_url' => route('videos.playlist', [$lesson->video, 'master']),
+                'processed_at' => $lesson->video->processed_at?->toIso8601String(),
+            ] : null,
+            'pending_video' => $pendingVideo ? [
+                'id' => $pendingVideo->id,
+                'status' => $pendingVideo->status,
+                'original_name' => $pendingVideo->original_name,
+                'error_message' => $pendingVideo->error_message,
+            ] : null,
             'attachments' => $lesson->attachments->map(fn (LessonAttachment $attachment) => [
                 'id' => $attachment->id,
                 'kind' => $attachment->kind,
@@ -65,7 +85,9 @@ class LessonController extends Controller
      */
     public function update(UpdateLessonRequest $request, Lesson $lesson): RedirectResponse
     {
-        $lesson->update($request->validated());
+        $lesson->fill($request->safe()->except('status'));
+        $lesson->status = $request->enum('status', PublicationStatus::class) ?? $lesson->status;
+        $lesson->save();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Aula atualizada.']);
 

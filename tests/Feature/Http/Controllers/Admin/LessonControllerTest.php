@@ -6,6 +6,7 @@ use App\Models\Lesson;
 use App\Models\LessonAttachment;
 use App\Models\Module;
 use App\Models\User;
+use App\Models\Video;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -114,4 +115,66 @@ test('deletes the lesson with its files and returns to the course', function () 
     $response->assertRedirect(route('admin.courses.edit', $lesson->course_id));
     $this->assertModelMissing($lesson);
     Storage::assertMissing($attachment->path);
+});
+
+test('publishes a lesson that has a ready video', function () {
+    $lesson = Lesson::factory()->create();
+    $video = Video::factory()->ready()->for($lesson)->create();
+    $lesson->video()->associate($video)->save();
+
+    $this->actingAs(User::factory()->admin()->create())
+        ->put(route('admin.lessons.update', $lesson), [
+            'title' => $lesson->title,
+            'slug' => $lesson->slug,
+            'status' => 'published',
+        ])
+        ->assertSessionHasNoErrors();
+
+    expect($lesson->fresh()->status)->toBe(PublicationStatus::Published);
+});
+
+test('refuses to publish a lesson without a ready video', function () {
+    $lesson = Lesson::factory()->create();
+    Video::factory()->queued()->for($lesson)->create();
+
+    $this->actingAs(User::factory()->admin()->create())
+        ->put(route('admin.lessons.update', $lesson), [
+            'title' => $lesson->title,
+            'slug' => $lesson->slug,
+            'status' => 'published',
+        ])
+        ->assertSessionHasErrors(['status' => 'A aula só pode ser publicada depois que o vídeo estiver pronto.']);
+
+    expect($lesson->fresh()->status)->toBe(PublicationStatus::Draft);
+});
+
+test('shows the current video and the upload in progress', function () {
+    Storage::fake();
+    $lesson = Lesson::factory()->create();
+    $current = Video::factory()->ready()->for($lesson)->create();
+    $lesson->video()->associate($current)->save();
+    $pending = Video::factory()->queued()->for($lesson)->create();
+
+    $response = $this->actingAs(User::factory()->admin()->create())
+        ->get(route('admin.lessons.edit', $lesson));
+
+    $response->assertInertia(fn (Assert $page) => $page
+        ->where('video.id', $current->id)
+        ->where('video.renditions', ['480p', '720p'])
+        ->where('video.playlist_url', route('videos.playlist', [$current, 'master']))
+        ->where('pending_video.id', $pending->id)
+        ->where('pending_video.status', 'queued'),
+    );
+});
+
+test('deleting a lesson also deletes its video files', function () {
+    Storage::fake();
+    $lesson = Lesson::factory()->create();
+    $video = Video::factory()->ready()->for($lesson)->create();
+    Storage::put("{$video->hlsDirectory()}/master.m3u8", '#EXTM3U');
+
+    $this->actingAs(User::factory()->admin()->create())
+        ->delete(route('admin.lessons.destroy', $lesson));
+
+    Storage::assertMissing("{$video->hlsDirectory()}/master.m3u8");
 });

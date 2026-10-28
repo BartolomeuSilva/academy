@@ -13,3 +13,17 @@ export function formatBytes(bytes: number): string {
 
     return `${value.toLocaleString('pt-BR', { maximumFractionDigits: unit === 0 ? 0 : 1 })} ${units[unit]}`;
 }
+
+/**
+ * Format a duration in seconds as "h:mm:ss" or "m:ss".
+ */
+export function formatDuration(totalSeconds: number): string {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = Math.floor(totalSeconds % 60);
+    const pad = (value: number) => String(value).padStart(2, '0');
+
+    return hours > 0
+        ? `${hours}:${pad(minutes)}:${pad(seconds)}`
+        : `${minutes}:${pad(seconds)}`;
+}

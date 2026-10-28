@@ -47,6 +47,14 @@ class PublicEndpointS3Adapter extends AwsS3V3Adapter
     }
 
     /**
+     * Get the client that signs URLs for browsers.
+     */
+    public function getPublicClient(): S3Client
+    {
+        return $this->publicClient;
+    }
+
+    /**
      * Run the callback with the public client in place of the internal one.
      *
      * @template TResult

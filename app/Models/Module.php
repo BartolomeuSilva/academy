@@ -50,10 +50,6 @@ class Module extends Model
      */
     public function storagePaths(): array
     {
-        return array_values(LessonAttachment::query()
-            ->whereIn('lesson_id', $this->lessons()->select('id'))
-            ->get(['path'])
-            ->map(fn (LessonAttachment $attachment) => $attachment->path)
-            ->all());
+        return Lesson::storagePathsFor(Lesson::query()->whereBelongsTo($this));
     }
 }

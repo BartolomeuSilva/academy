@@ -78,12 +78,9 @@ class Course extends Model
      */
     public function storagePaths(): array
     {
-        $attachmentPaths = LessonAttachment::query()
-            ->whereIn('lesson_id', $this->lessons()->select('id'))
-            ->get(['path'])
-            ->map(fn (LessonAttachment $attachment) => $attachment->path)
-            ->all();
-
-        return array_values(array_filter([$this->cover_path, ...$attachmentPaths]));
+        return array_values(array_filter([
+            $this->cover_path,
+            ...Lesson::storagePathsFor(Lesson::query()->whereBelongsTo($this)),
+        ]));
     }
 }

@@ -30,7 +30,10 @@ x-app-env: &app-env
     AWS_SECRET_ACCESS_KEY_FILE: /run/secrets/academy_s3_secret
     AWS_DEFAULT_REGION: us-east-1
     AWS_BUCKET: academy
-    AWS_ENDPOINT: https://storage.ichatbot.com.br
+        # Endereço usado pelo servidor (pode ser o serviço interno do MinIO no Swarm)
+    # e endereço público usado nas URLs que vão para o navegador.
+    AWS_ENDPOINT: ${AWS_ENDPOINT:-https://storage.ichatbot.com.br}
+    AWS_PUBLIC_ENDPOINT: https://storage.ichatbot.com.br
     AWS_USE_PATH_STYLE_ENDPOINT: 'true'
     MAIL_MAILER: smtp
     MAIL_HOST: mail.g5d.com.br
@@ -118,7 +121,7 @@ services:
         healthcheck:
             disable: true
         volumes:
-            - video-tmp:/tmp/video
+            - video-work:/var/www/html/storage/app/video-work
         deploy:
             replicas: 1
             update_config:
@@ -181,7 +184,7 @@ networks:
 volumes:
     postgres-data:
     redis-data:
-    video-tmp:
+    video-work:
 
 secrets:
     academy_app_key: { external: true }

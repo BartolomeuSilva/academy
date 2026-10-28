@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\LessonAttachmentController;
 use App\Http\Controllers\Admin\LessonAttachmentOrderController;
 use App\Http\Controllers\Admin\LessonController;
 use App\Http\Controllers\Admin\LessonOrderController;
+use App\Http\Controllers\Admin\LessonVideoController;
 use App\Http\Controllers\Admin\ModuleController;
 use App\Http\Controllers\Admin\ModuleOrderController;
 use Illuminate\Support\Facades\Route;
@@ -37,6 +38,11 @@ Route::middleware(['auth', 'verified', 'admin'])
         Route::get('aulas/{lesson}/editar', [LessonController::class, 'edit'])->name('lessons.edit');
         Route::put('aulas/{lesson}', [LessonController::class, 'update'])->name('lessons.update');
         Route::delete('aulas/{lesson}', [LessonController::class, 'destroy'])->name('lessons.destroy');
+
+        Route::post('aulas/{lesson}/video', [LessonVideoController::class, 'store'])->name('lessons.video.store');
+        Route::post('videos/{video}/partes', [LessonVideoController::class, 'parts'])->name('videos.parts');
+        Route::post('videos/{video}/concluir', [LessonVideoController::class, 'complete'])->name('videos.complete');
+        Route::delete('videos/{video}', [LessonVideoController::class, 'destroy'])->name('videos.destroy');
 
         Route::post('aulas/{lesson}/anexos', [LessonAttachmentController::class, 'store'])->name('lessons.attachments.store');
         Route::put('aulas/{lesson}/anexos/ordem', [LessonAttachmentOrderController::class, 'update'])->name('lessons.attachments.order');

@@ -26,11 +26,11 @@ Cada fase termina com tudo testado, todos os gates verdes e deploy em produção
 
 ## Fase 2 — Pipeline de vídeo
 
-- [ ] Model `Video`, multipart upload direto ao MinIO com retomada (US-12)
-- [ ] `EncodeVideo` com FFmpeg → HLS, poster, duração
-- [ ] Serviço `video-worker` com limites de CPU no Swarm
-- [ ] Status com polling no admin, reprocessar, substituir vídeo
-- [ ] Endpoint de stream com playlists reescritas e URLs assinadas
+- [x] Model `Video`, multipart upload direto ao MinIO com retomada (US-12)
+- [x] `EncodeVideo` com FFmpeg → HLS, poster, duração
+- [x] Serviço `video-worker` com limites de CPU no Swarm
+- [x] Status com polling no admin, substituir vídeo, publicação da aula (sem reprocessar: o original é apagado)
+- [x] Endpoint de stream com playlists reescritas e URLs assinadas
 
 ## Fase 3 — Experiência do aluno
 
