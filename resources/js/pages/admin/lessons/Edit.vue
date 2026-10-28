@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { Form, Head, Link, router } from '@inertiajs/vue3';
-import { Eye, Trash2 } from '@lucide/vue';
+import { EyeOff, Eye, Trash2 } from '@lucide/vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import InputError from '@/components/InputError.vue';
 import LessonAttachmentsManager from '@/components/LessonAttachmentsManager.vue';
 import LessonVideoManager from '@/components/LessonVideoManager.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -68,6 +69,18 @@ function removeLesson(close: () => void): void {
                 </Button>
             </div>
         </div>
+
+        <Alert v-if="lesson.status === 'draft'" data-test="draft-lesson-alert">
+            <EyeOff />
+            <AlertTitle>Os alunos ainda não veem esta aula</AlertTitle>
+            <AlertDescription>
+                {{
+                    video
+                        ? 'O vídeo está pronto. Em Detalhes, mude o Status para Publicado e clique em Salvar.'
+                        : 'Envie o vídeo e, quando estiver pronto, mude o Status para Publicado e clique em Salvar.'
+                }}
+            </AlertDescription>
+        </Alert>
 
         <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
             <div class="space-y-6">

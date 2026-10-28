@@ -23,6 +23,7 @@ test('an admin builds a course with a module and a lesson', function () {
         ->press('Aula')
         ->click('Conheça a empresa')
         ->assertSee('Vídeo da aula')
+        ->assertSee('Os alunos ainda não veem esta aula')
         ->assertNoJavaScriptErrors();
 
     $lesson = Lesson::query()->where('title', 'Conheça a empresa')->sole();
