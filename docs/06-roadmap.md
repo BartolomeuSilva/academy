@@ -46,8 +46,8 @@ Cada fase termina com tudo testado, todos os gates verdes e deploy em produção
 
 ## Fase 5 — Gestão e polimento
 
-- [ ] Gestão de usuários: promover, rebaixar, bloquear (US-14)
-- [ ] Revisão de acessibilidade e performance (N+1, índices, cache de playlists)
+- [x] Gestão de usuários: promover, rebaixar, bloquear (US-14)
+- [x] Revisão de acessibilidade e performance (N+1, índices, cache de playlists)
 - [ ] Ajustes de UX a partir do uso real
 
 ## Pós-MVP (candidatos)

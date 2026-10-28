@@ -7,7 +7,20 @@ test('public pages render without errors in light and dark mode', function () {
 
     $pages->assertNoSmoke()->assertNoAccessibilityIssues();
 
-    visit('/')->inDarkMode()->assertNoSmoke();
+    foreach (['/', '/login', '/register', '/forgot-password'] as $url) {
+        visit($url)->inDarkMode()->assertNoSmoke()->assertNoAccessibilityIssues();
+    }
+});
+
+test('the settings pages have no accessibility issues in light and dark mode', function () {
+    $this->actingAs(User::factory()->create());
+    $urls = ['/settings/profile', '/settings/security', '/settings/appearance'];
+
+    visit($urls)->assertNoSmoke()->assertNoAccessibilityIssues();
+
+    foreach ($urls as $url) {
+        visit($url)->inDarkMode()->assertNoAccessibilityIssues();
+    }
 });
 
 test('a visitor can register and reach the verification notice', function () {

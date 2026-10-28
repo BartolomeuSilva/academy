@@ -11,6 +11,9 @@ use App\Http\Controllers\Admin\LessonOrderController;
 use App\Http\Controllers\Admin\LessonVideoController;
 use App\Http\Controllers\Admin\ModuleController;
 use App\Http\Controllers\Admin\ModuleOrderController;
+use App\Http\Controllers\Admin\UserBlockController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\UserRoleController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified', 'admin'])
@@ -52,4 +55,9 @@ Route::middleware(['auth', 'verified', 'admin'])
 
         Route::get('comentarios', [CommentController::class, 'index'])->name('comments.index');
         Route::delete('comentarios/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
+
+        Route::get('usuarios', [UserController::class, 'index'])->name('users.index');
+        Route::put('usuarios/{user}/papel', [UserRoleController::class, 'update'])->name('users.role.update');
+        Route::post('usuarios/{user}/bloqueio', [UserBlockController::class, 'store'])->name('users.block.store');
+        Route::delete('usuarios/{user}/bloqueio', [UserBlockController::class, 'destroy'])->name('users.block.destroy');
     });

@@ -17,10 +17,12 @@ withDefaults(
         title: string;
         description: string;
         confirmLabel?: string;
+        confirmVariant?: 'destructive' | 'default';
         processing?: boolean;
     }>(),
     {
         confirmLabel: 'Excluir',
+        confirmVariant: 'destructive',
         processing: false,
     },
 );
@@ -51,7 +53,7 @@ function confirm(): void {
                     <Button variant="secondary">Cancelar</Button>
                 </DialogClose>
                 <Button
-                    variant="destructive"
+                    :variant="confirmVariant"
                     :disabled="processing"
                     data-test="confirm-dialog-button"
                     @click="confirm"

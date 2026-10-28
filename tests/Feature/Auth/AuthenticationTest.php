@@ -5,6 +5,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Fortify\Features;
 use Laravel\Passkeys\Contracts\PasskeyLoginResponse;
+use Laravel\Passkeys\Passkey;
+use Laravel\Passkeys\Passkeys;
 
 test('login screen can be rendered', function () {
     $response = $this->get(route('login'));
@@ -34,6 +36,14 @@ test('blocked users can not authenticate', function () {
 
     $this->assertGuest();
     $response->assertSessionHasErrors(['email' => 'Sua conta foi bloqueada. Entre em contato com um administrador.']);
+});
+
+test('blocked users can not log in with a passkey', function () {
+    $passkey = (new Passkey)->setRelation('user', User::factory()->blocked()->create());
+    $activePasskey = (new Passkey)->setRelation('user', User::factory()->create());
+
+    expect(Passkeys::allowsLogin(Request::create('/'), $passkey))->toBeFalse()
+        ->and(Passkeys::allowsLogin(Request::create('/'), $activePasskey))->toBeTrue();
 });
 
 test('passkey login response redirects to the catalog', function () {

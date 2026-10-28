@@ -1,3 +1,5 @@
+import type { UserRole } from './auth';
+
 export type PublicationStatus = 'draft' | 'published';
 
 export type AttachmentKind = 'image' | 'pdf';
@@ -95,4 +97,15 @@ export type Paginated<T> = {
     total: number;
     prev_page_url: string | null;
     next_page_url: string | null;
+};
+
+export type AdminUser = {
+    id: number;
+    name: string;
+    email: string;
+    role: UserRole;
+    blocked: boolean;
+    verified: boolean;
+    created_at: string | null;
+    is_self: boolean;
 };

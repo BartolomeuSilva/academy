@@ -15,6 +15,8 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
+use Laravel\Passkeys\Contracts\PasskeyUser;
+use Laravel\Passkeys\Passkeys;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -39,7 +41,7 @@ class FortifyServiceProvider extends ServiceProvider
     }
 
     /**
-     * Reject blocked users when they try to log in with valid credentials.
+     * Reject blocked users when they try to log in with a password or a passkey.
      */
     private function configureAuthentication(): void
     {
@@ -60,6 +62,8 @@ class FortifyServiceProvider extends ServiceProvider
 
             return $user;
         });
+
+        Passkeys::authorizeLoginUsing(fn (Request $request, PasskeyUser $user): bool => ! ($user instanceof User && $user->isBlocked()));
     }
 
     /**

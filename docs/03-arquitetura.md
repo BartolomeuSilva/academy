@@ -53,10 +53,15 @@ lang/pt_BR/           # validation.php, auth.php, passwords.php, pagination.php
 | POST              | `/admin/aulas/{lesson}/video`               | Inicia multipart upload                                  |
 | POST              | `/admin/videos/{video}/partes`              | Assina URLs das partes                                   |
 | POST              | `/admin/videos/{video}/concluir`            | Conclui upload e enfileira encoding                      |
+| GET               | `/admin/usuarios[?busca=]`                  | Lista e busca usuários (nome ou e-mail)                  |
+| PUT               | `/admin/usuarios/{user}/papel`              | Promove a Admin / rebaixa a Aluno                        |
+| POST/DELETE       | `/admin/usuarios/{user}/bloqueio`           | Bloqueia / desbloqueia                                   |
 
 Aluno recebe **404** (não 403) para curso, aula ou anexo fora do catálogo. Admin pré-visualiza rascunhos pelas mesmas páginas ("Ver como aluno").
 
 **Progresso:** o player salva a posição a cada 15 s de reprodução, ao pausar e ao sair da página (`fetch` com `keepalive`). A aula é concluída na primeira vez que a posição cruza 90% da duração; se o aluno desmarcar, ela não volta a ser concluída sozinha enquanto a posição continuar acima desse ponto. Ao reabrir, o vídeo retoma da posição salva, exceto nos 15 s finais (recomeça do início). "Continuar de onde parei" aponta para a última aula assistida, ou para a próxima não concluída se aquela já foi concluída.
+
+**Usuários:** um Admin não altera o próprio papel nem se bloqueia. Cada alteração trava os Admins ativos numa transação e confirma que quem age ainda é Admin ativo, então dois Admins rebaixando ou bloqueando um ao outro ao mesmo tempo nunca deixam a plataforma sem Admin. O bloqueado é desconectado na próxima requisição e não entra nem por senha nem por passkey.
 
 Rotas com nomes; frontend consome via Wayfinder (`@/actions`, `@/routes`).
 

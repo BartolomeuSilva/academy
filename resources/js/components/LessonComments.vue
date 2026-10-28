@@ -60,6 +60,7 @@ function loadMore(): void {
                 placeholder="Tire uma dúvida ou deixe um comentário sobre a aula"
                 maxlength="2000"
                 required
+                :readonly="processing"
                 data-test="new-comment-input"
             />
             <InputError :message="errors.body" />
