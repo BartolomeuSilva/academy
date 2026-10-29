@@ -53,7 +53,7 @@ test('catalog cards count only visible lessons and the student own completions',
 });
 
 test('the catalog features the spotlighted course and tells each course category', function () {
-    $featured = Course::factory()->published()->featured()->create(['category' => 'Vendas']);
+    $featured = Course::factory()->published()->featured()->create(['category' => 'Vendas', 'banner_mobile_path' => 'banners/celular.jpg']);
     visibleLesson(Module::factory()->for($featured)->create());
     $hiddenFeatured = Course::factory()->featured()->create();
     visibleLesson(Module::factory()->for($hiddenFeatured)->create());
@@ -63,6 +63,7 @@ test('the catalog features the spotlighted course and tells each course category
         ->assertInertia(fn (Assert $page) => $page
             ->where('featured.id', $featured->id)
             ->where('featured.banner_url', fn (string $url) => str_contains($url, $featured->banner_path))
+            ->where('featured.banner_mobile_url', fn (string $url) => str_contains($url, 'banners/celular.jpg'))
             ->where('courses.0.category', 'Vendas'));
 });
 

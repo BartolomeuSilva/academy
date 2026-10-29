@@ -188,11 +188,12 @@ describe('update', function () {
 
 describe('destroy', function () {
     test('deletes the course with its content and files', function () {
-        $course = Course::factory()->withCover()->featured()->create();
+        $course = Course::factory()->withCover()->featured()->create(['banner_mobile_path' => 'banners/celular.jpg']);
         $lesson = Lesson::factory()->for(Module::factory()->for($course))->create();
         $attachment = LessonAttachment::factory()->for($lesson)->create();
         Storage::put($course->cover_path, 'capa');
         Storage::put($course->banner_path, 'banner');
+        Storage::put($course->banner_mobile_path, 'banner');
         Storage::put($attachment->path, 'pdf');
 
         $response = $this->actingAs(User::factory()->admin()->create())
@@ -202,6 +203,6 @@ describe('destroy', function () {
         $this->assertModelMissing($course);
         $this->assertModelMissing($lesson);
         $this->assertModelMissing($attachment);
-        Storage::assertMissing([$course->cover_path, $course->banner_path, $attachment->path]);
+        Storage::assertMissing([$course->cover_path, $course->banner_path, $course->banner_mobile_path, $attachment->path]);
     });
 });

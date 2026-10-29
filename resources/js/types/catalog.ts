@@ -16,6 +16,7 @@ export type CatalogCourse = {
 export type FeaturedCourse = {
     id: number;
     banner_url: string;
+    banner_mobile_url: string | null;
 };
 
 export type OutlineLesson = {

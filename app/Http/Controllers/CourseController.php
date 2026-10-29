@@ -48,6 +48,7 @@ class CourseController extends Controller
             'featured' => $featured ? [
                 'id' => $featured->id,
                 'banner_url' => $featured->bannerUrl(),
+                'banner_mobile_url' => $featured->bannerMobileUrl(),
             ] : null,
             'courses' => $courses->map(fn (Course $course) => [
                 'id' => $course->id,

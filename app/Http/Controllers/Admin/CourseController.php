@@ -85,6 +85,7 @@ class CourseController extends Controller
                 'status' => $course->status,
                 'cover_url' => $course->coverUrl(),
                 'banner_url' => $course->bannerUrl(),
+                'banner_mobile_url' => $course->bannerMobileUrl(),
                 'featured' => $course->featured_at !== null,
             ],
             'categories' => Course::query()->whereNotNull('category')->distinct()->orderBy('category')->pluck('category'),

@@ -13,13 +13,14 @@ use RuntimeException;
 class CourseBannerController extends Controller
 {
     /**
-     * Upload a new banner, replacing the current one.
+     * Upload the desktop or phone banner, replacing the current one.
      */
-    public function store(UpdateCourseBannerRequest $request, Course $course): RedirectResponse
+    public function store(UpdateCourseBannerRequest $request, Course $course, string $format): RedirectResponse
     {
-        $previousPath = $course->banner_path;
+        $column = $this->column($format);
+        $previousPath = $course->{$column};
 
-        $course->banner_path = $request->file('banner')->store('banners')
+        $course->{$column} = $request->file('banner')->store('banners')
             ?: throw new RuntimeException('Não foi possível salvar o banner.');
         $course->save();
 
@@ -33,18 +34,32 @@ class CourseBannerController extends Controller
     }
 
     /**
-     * Remove the banner; a course without one can not stay featured.
+     * Remove a banner; without the desktop one the course can not stay featured.
      */
-    public function destroy(Course $course): RedirectResponse
+    public function destroy(Course $course, string $format): RedirectResponse
     {
-        if ($course->banner_path) {
-            DeleteStoragePaths::dispatch([$course->banner_path]);
+        $column = $this->column($format);
 
-            $course->banner_path = null;
-            $course->featured_at = null;
+        if ($course->{$column}) {
+            DeleteStoragePaths::dispatch([$course->{$column}]);
+
+            $course->{$column} = null;
+
+            if ($column === 'banner_path') {
+                $course->featured_at = null;
+            }
+
             $course->save();
         }
 
         return back();
+    }
+
+    /**
+     * @return 'banner_path'|'banner_mobile_path'
+     */
+    private function column(string $format): string
+    {
+        return $format === 'celular' ? 'banner_mobile_path' : 'banner_path';
     }
 }

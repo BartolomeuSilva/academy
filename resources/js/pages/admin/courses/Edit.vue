@@ -194,14 +194,25 @@ function toggleFeatured(): void {
                 />
 
                 <CourseImageCard
-                    title="Banner"
+                    title="Banner (computador)"
                     field="banner"
                     :image-url="course.banner_url"
-                    :upload-url="banner.store.url(course.id)"
-                    :remove-url="banner.destroy.url(course.id)"
-                    hint="Imagem larga do destaque no topo da vitrine. JPG, PNG ou WEBP até 5 MB (ex.: 1920 × 820 px). Deixe o lado esquerdo mais limpo: o título aparece ali."
+                    :upload-url="
+                        banner.store.url({
+                            course: course.id,
+                            format: 'computador',
+                        })
+                    "
+                    :remove-url="
+                        banner.destroy.url({
+                            course: course.id,
+                            format: 'computador',
+                        })
+                    "
+                    hint="Destaque no topo da vitrine em telas grandes. JPG, PNG ou WEBP até 5 MB (ex.: 1920 × 820 px). Deixe o lado esquerdo mais limpo: o título aparece ali."
                     preview-class="aspect-[21/9]"
                     :error="bannerError"
+                    input-test="banner-input"
                 >
                     <div class="border-t pt-3">
                         <Button
@@ -227,6 +238,27 @@ function toggleFeatured(): void {
                         </p>
                     </div>
                 </CourseImageCard>
+
+                <CourseImageCard
+                    title="Banner (celular)"
+                    field="banner"
+                    :image-url="course.banner_mobile_url"
+                    :upload-url="
+                        banner.store.url({
+                            course: course.id,
+                            format: 'celular',
+                        })
+                    "
+                    :remove-url="
+                        banner.destroy.url({
+                            course: course.id,
+                            format: 'celular',
+                        })
+                    "
+                    hint="Versão do destaque para celular, em pé. JPG, PNG ou WEBP até 5 MB (ex.: 1080 × 1350 px). Deixe a parte de baixo mais limpa: o título aparece ali. Sem ela, o celular usa o banner do computador."
+                    preview-class="mx-auto aspect-[4/5] w-48"
+                    input-test="banner-mobile-input"
+                />
 
                 <section
                     class="space-y-3 rounded-xl border border-destructive/30 p-4"

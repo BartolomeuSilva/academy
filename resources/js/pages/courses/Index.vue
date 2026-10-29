@@ -65,16 +65,23 @@ const rows = computed(() => {
             aria-labelledby="spotlight-heading"
             data-test="featured-course"
         >
-            <img
-                :src="featured.banner_url"
-                alt=""
-                class="absolute inset-0 size-full object-cover"
-            />
+            <picture>
+                <source
+                    v-if="featured.banner_mobile_url"
+                    media="(max-width: 639px)"
+                    :srcset="featured.banner_mobile_url"
+                />
+                <img
+                    :src="featured.banner_url"
+                    alt=""
+                    class="absolute inset-0 size-full object-cover"
+                />
+            </picture>
             <div
                 class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/10 sm:bg-gradient-to-r sm:from-black/90 sm:via-black/60 sm:to-transparent"
             />
             <div
-                class="relative flex min-h-80 max-w-xl flex-col justify-end gap-4 p-6 sm:min-h-96 sm:justify-center sm:p-10"
+                class="relative flex min-h-[28rem] max-w-xl flex-col justify-end gap-4 p-6 sm:min-h-96 sm:justify-center sm:p-10"
             >
                 <p
                     v-if="spotlight.category"

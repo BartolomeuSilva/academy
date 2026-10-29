@@ -32,8 +32,8 @@ Route::middleware(['auth', 'verified', 'admin'])
 
         Route::post('cursos/{course}/capa', [CourseCoverController::class, 'store'])->name('courses.cover.store');
         Route::delete('cursos/{course}/capa', [CourseCoverController::class, 'destroy'])->name('courses.cover.destroy');
-        Route::post('cursos/{course}/banner', [CourseBannerController::class, 'store'])->name('courses.banner.store');
-        Route::delete('cursos/{course}/banner', [CourseBannerController::class, 'destroy'])->name('courses.banner.destroy');
+        Route::post('cursos/{course}/banner/{format}', [CourseBannerController::class, 'store'])->whereIn('format', ['computador', 'celular'])->name('courses.banner.store');
+        Route::delete('cursos/{course}/banner/{format}', [CourseBannerController::class, 'destroy'])->whereIn('format', ['computador', 'celular'])->name('courses.banner.destroy');
         Route::post('cursos/{course}/destaque', [CourseFeatureController::class, 'store'])->name('courses.feature.store');
         Route::delete('cursos/{course}/destaque', [CourseFeatureController::class, 'destroy'])->name('courses.feature.destroy');
 

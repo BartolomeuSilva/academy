@@ -15,7 +15,7 @@ test('uploads a banner and removes the previous one', function () {
     Storage::put($previousPath, 'antigo');
 
     $this->actingAs(User::factory()->admin()->create())
-        ->post(route('admin.courses.banner.store', $course), [
+        ->post(route('admin.courses.banner.store', [$course, 'computador']), [
             'banner' => UploadedFile::fake()->image('banner.jpg', 1920, 820),
         ])
         ->assertRedirect()
@@ -31,7 +31,7 @@ test('rejects banners that are not images', function () {
     $course = Course::factory()->create();
 
     $this->actingAs(User::factory()->admin()->create())
-        ->post(route('admin.courses.banner.store', $course), [
+        ->post(route('admin.courses.banner.store', [$course, 'computador']), [
             'banner' => UploadedFile::fake()->create('banner.pdf', 100, 'application/pdf'),
         ])
         ->assertSessionHasErrors(['banner' => 'O campo banner deve ser uma imagem.']);
@@ -45,13 +45,51 @@ test('removing the banner also takes the course out of the spotlight', function 
     $path = $course->banner_path;
 
     $this->actingAs(User::factory()->admin()->create())
-        ->delete(route('admin.courses.banner.destroy', $course))
+        ->delete(route('admin.courses.banner.destroy', [$course, 'computador']))
         ->assertRedirect();
 
     expect($course->fresh())
         ->banner_path->toBeNull()
         ->featured_at->toBeNull();
     Storage::assertMissing($path);
+});
+
+test('the phone banner is stored apart from the desktop one', function () {
+    $course = Course::factory()->featured()->create();
+    $desktopPath = $course->banner_path;
+
+    $this->actingAs(User::factory()->admin()->create())
+        ->post(route('admin.courses.banner.store', [$course, 'celular']), [
+            'banner' => UploadedFile::fake()->image('banner.jpg', 1080, 1350),
+        ])
+        ->assertRedirect();
+
+    $course->refresh();
+    expect($course->banner_path)->toBe($desktopPath)
+        ->and($course->banner_mobile_path)->toStartWith('banners/');
+    Storage::assertExists($course->banner_mobile_path);
+});
+
+test('removing the phone banner keeps the course featured', function () {
+    $course = Course::factory()->featured()->create(['banner_mobile_path' => 'banners/celular.jpg']);
+    Storage::put('banners/celular.jpg', 'banner');
+
+    $this->actingAs(User::factory()->admin()->create())
+        ->delete(route('admin.courses.banner.destroy', [$course, 'celular']))
+        ->assertRedirect();
+
+    expect($course->fresh())
+        ->banner_mobile_path->toBeNull()
+        ->featured_at->not->toBeNull();
+    Storage::assertMissing('banners/celular.jpg');
+});
+
+test('only the desktop and phone banners exist', function () {
+    $course = Course::factory()->create();
+
+    $this->actingAs(User::factory()->admin()->create())
+        ->post("/admin/cursos/{$course->id}/banner/tablet", ['banner' => UploadedFile::fake()->image('b.jpg')])
+        ->assertNotFound();
 });
 
 test('featuring a course replaces the current featured one', function () {
@@ -92,7 +130,7 @@ test('students can not manage banners or the spotlight', function () {
     $student = User::factory()->create();
 
     $this->actingAs($student)
-        ->post(route('admin.courses.banner.store', $course), ['banner' => UploadedFile::fake()->image('b.jpg')])
+        ->post(route('admin.courses.banner.store', [$course, 'computador']), ['banner' => UploadedFile::fake()->image('b.jpg')])
         ->assertForbidden();
     $this->actingAs($student)->post(route('admin.courses.feature.store', $course))->assertForbidden();
 

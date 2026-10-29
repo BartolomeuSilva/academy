@@ -5,7 +5,8 @@ use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
 /**
- * Every admin route with placeholder parameters, so new routes are covered automatically.
+ * Every admin route with placeholder parameters (or the first allowed value of a
+ * constrained one), so new routes are covered automatically.
  *
  * @return array<string, array{string, string}>
  */
@@ -16,7 +17,11 @@ function adminRoutes(): array
         ->mapWithKeys(fn (Route $route) => [
             $route->getName() => [
                 collect($route->methods())->reject(fn (string $method) => $method === 'HEAD')->first(),
-                '/'.preg_replace('/\{[^}]+\}/', '1', $route->uri()),
+                '/'.preg_replace_callback(
+                    '/\{([^}?]+)\??\}/',
+                    fn (array $match) => isset($route->wheres[$match[1]]) ? explode('|', $route->wheres[$match[1]])[0] : '1',
+                    $route->uri(),
+                ),
             ],
         ])
         ->all();

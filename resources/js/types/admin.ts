@@ -24,6 +24,7 @@ export type AdminCourse = {
     status: PublicationStatus;
     cover_url: string | null;
     banner_url: string | null;
+    banner_mobile_url: string | null;
     featured: boolean;
 };
 

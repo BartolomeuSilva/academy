@@ -25,6 +25,7 @@ use Illuminate\Support\Str;
  * @property string|null $category
  * @property string|null $cover_path
  * @property string|null $banner_path
+ * @property string|null $banner_mobile_path
  * @property CarbonImmutable|null $featured_at
  * @property PublicationStatus $status
  * @property CarbonImmutable|null $published_at
@@ -112,6 +113,14 @@ class Course extends Model
     }
 
     /**
+     * Get a short-lived URL for the banner version made for phones, if one was uploaded.
+     */
+    public function bannerMobileUrl(): ?string
+    {
+        return $this->banner_mobile_path ? Storage::temporaryUrl($this->banner_mobile_path, now()->addHour()) : null;
+    }
+
+    /**
      * Get every storage path owned by the course and its lessons.
      *
      * @return list<string>
@@ -121,6 +130,7 @@ class Course extends Model
         return array_values(array_filter([
             $this->cover_path,
             $this->banner_path,
+            $this->banner_mobile_path,
             ...Lesson::storagePathsFor(Lesson::query()->whereBelongsTo($this)),
         ]));
     }

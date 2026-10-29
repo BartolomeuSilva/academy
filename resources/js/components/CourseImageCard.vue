@@ -14,6 +14,7 @@ const props = defineProps<{
     hint: string;
     previewClass: string;
     error?: string;
+    inputTest?: string;
 }>();
 
 const fileInput = useTemplateRef('fileInput');
@@ -93,7 +94,7 @@ function remove(): void {
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 class="hidden"
-                :data-test="`${field}-input`"
+                :data-test="inputTest ?? `${field}-input`"
                 @change="upload"
             />
             <Button
