@@ -5,11 +5,17 @@ export type CatalogCourse = {
     slug: string;
     title: string;
     summary: string;
+    category: string | null;
     cover_url: string | null;
     lessons_count: number;
     completed_lessons_count: number;
     duration_seconds: number;
     started: boolean;
+};
+
+export type FeaturedCourse = {
+    id: number;
+    banner_url: string;
 };
 
 export type OutlineLesson = {

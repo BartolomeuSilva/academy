@@ -53,4 +53,15 @@ class CourseFactory extends Factory
             'cover_path' => 'covers/'.Str::uuid().'.jpg',
         ]);
     }
+
+    /**
+     * Indicate that the course has a banner and is featured in the catalog.
+     */
+    public function featured(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'banner_path' => 'banners/'.Str::uuid().'.jpg',
+            'featured_at' => now(),
+        ]);
+    }
 }

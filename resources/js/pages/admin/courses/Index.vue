@@ -85,7 +85,7 @@ function saveOrder(): void {
                 </button>
 
                 <div
-                    class="hidden aspect-video w-28 shrink-0 overflow-hidden rounded-md bg-muted sm:block"
+                    class="hidden aspect-[2/3] w-12 shrink-0 overflow-hidden rounded-md bg-muted sm:block"
                 >
                     <img
                         v-if="course.cover_url"

@@ -22,7 +22,10 @@ use Illuminate\Support\Str;
  * @property string $slug
  * @property string $summary
  * @property string|null $description
+ * @property string|null $category
  * @property string|null $cover_path
+ * @property string|null $banner_path
+ * @property CarbonImmutable|null $featured_at
  * @property PublicationStatus $status
  * @property CarbonImmutable|null $published_at
  * @property int $position
@@ -34,7 +37,7 @@ use Illuminate\Support\Str;
  * @property-read int|string|null $duration_seconds Loaded by the catalog query.
  * @property-read bool|null $started Loaded by the catalog query.
  */
-#[Fillable(['title', 'slug', 'summary', 'description'])]
+#[Fillable(['title', 'slug', 'summary', 'description', 'category'])]
 class Course extends Model
 {
     /** @use HasFactory<CourseFactory> */
@@ -50,6 +53,7 @@ class Course extends Model
         return [
             'status' => PublicationStatus::class,
             'published_at' => 'datetime',
+            'featured_at' => 'datetime',
         ];
     }
 
@@ -100,6 +104,14 @@ class Course extends Model
     }
 
     /**
+     * Get a short-lived URL for the wide banner shown when the course is featured.
+     */
+    public function bannerUrl(): ?string
+    {
+        return $this->banner_path ? Storage::temporaryUrl($this->banner_path, now()->addHour()) : null;
+    }
+
+    /**
      * Get every storage path owned by the course and its lessons.
      *
      * @return list<string>
@@ -108,6 +120,7 @@ class Course extends Model
     {
         return array_values(array_filter([
             $this->cover_path,
+            $this->banner_path,
             ...Lesson::storagePathsFor(Lesson::query()->whereBelongsTo($this)),
         ]));
     }

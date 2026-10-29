@@ -42,12 +42,19 @@ class CourseController extends Controller
             ->orderBy('position')
             ->get();
 
+        $featured = $courses->first(fn (Course $course) => $course->featured_at !== null && $course->banner_path !== null);
+
         return Inertia::render('courses/Index', [
+            'featured' => $featured ? [
+                'id' => $featured->id,
+                'banner_url' => $featured->bannerUrl(),
+            ] : null,
             'courses' => $courses->map(fn (Course $course) => [
                 'id' => $course->id,
                 'slug' => $course->slug,
                 'title' => $course->title,
                 'summary' => $course->summary,
+                'category' => $course->category,
                 'cover_url' => $course->coverUrl(),
                 'lessons_count' => $course->lessons_count,
                 'completed_lessons_count' => $course->completed_lessons_count,

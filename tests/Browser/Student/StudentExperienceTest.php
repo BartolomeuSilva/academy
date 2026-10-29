@@ -57,8 +57,31 @@ test('a student goes from the catalog to a lesson and completes it', function ()
     visit('/cursos')
         ->assertSee('Continue assistindo')
         ->assertSee('50% concluído')
-        ->click('@continue-course')
+        ->click('[data-test="continue-row"] [data-test="catalog-course"]')
         ->assertPathIs("/cursos/{$course->slug}/aulas/{$second->slug}");
+});
+
+test('the catalog shows the featured course and one row per category', function () {
+    ['course' => $course] = publishedCourse();
+    $course->update(['category' => 'Integração']);
+    $course->forceFill(['banner_path' => 'banners/onboarding.jpg', 'featured_at' => now()])->save();
+    $other = Course::factory()->published()->create(['title' => 'Vendas consultivas', 'category' => 'Vendas']);
+    visibleLesson(Module::factory()->for($other)->create());
+    $uncategorized = Course::factory()->published()->create(['title' => 'Excel básico']);
+    visibleLesson(Module::factory()->for($uncategorized)->create());
+    $this->actingAs(User::factory()->create());
+
+    visit('/cursos')
+        ->assertSeeIn('@featured-course', 'Onboarding')
+        ->assertSeeIn('@featured-course', 'Começar curso')
+        ->assertSee('Integração')
+        ->assertSee('Vendas')
+        ->assertSee('Outros cursos')
+        ->assertSee('Excel básico')
+        ->assertNoAccessibilityIssues()
+        ->click('@featured-course-link')
+        ->assertPathBeginsWith("/cursos/{$course->slug}/aulas/")
+        ->assertNoJavaScriptErrors();
 });
 
 test('student pages have no accessibility issues in light and dark mode', function () {

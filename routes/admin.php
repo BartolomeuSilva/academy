@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\Admin\CommentController;
+use App\Http\Controllers\Admin\CourseBannerController;
 use App\Http\Controllers\Admin\CourseController;
 use App\Http\Controllers\Admin\CourseCoverController;
+use App\Http\Controllers\Admin\CourseFeatureController;
 use App\Http\Controllers\Admin\CourseOrderController;
 use App\Http\Controllers\Admin\LessonAttachmentController;
 use App\Http\Controllers\Admin\LessonAttachmentOrderController;
@@ -30,6 +32,10 @@ Route::middleware(['auth', 'verified', 'admin'])
 
         Route::post('cursos/{course}/capa', [CourseCoverController::class, 'store'])->name('courses.cover.store');
         Route::delete('cursos/{course}/capa', [CourseCoverController::class, 'destroy'])->name('courses.cover.destroy');
+        Route::post('cursos/{course}/banner', [CourseBannerController::class, 'store'])->name('courses.banner.store');
+        Route::delete('cursos/{course}/banner', [CourseBannerController::class, 'destroy'])->name('courses.banner.destroy');
+        Route::post('cursos/{course}/destaque', [CourseFeatureController::class, 'store'])->name('courses.feature.store');
+        Route::delete('cursos/{course}/destaque', [CourseFeatureController::class, 'destroy'])->name('courses.feature.destroy');
 
         Route::post('cursos/{course}/modulos', [ModuleController::class, 'store'])->name('courses.modules.store');
         Route::put('cursos/{course}/modulos/ordem', [ModuleOrderController::class, 'update'])->name('courses.modules.order');

@@ -85,6 +85,19 @@ describe('edit', function () {
             ->where('modules.1.id', $lateModule->id),
         );
     });
+
+    test('suggests the categories already in use', function () {
+        Course::factory()->create(['category' => 'Vendas']);
+        Course::factory()->create(['category' => 'Atendimento']);
+        Course::factory()->create(['category' => 'Vendas']);
+        $course = Course::factory()->create();
+
+        $this->actingAs(User::factory()->admin()->create())
+            ->get(route('admin.courses.edit', $course))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('categories', ['Atendimento', 'Vendas'])
+                ->where('course.featured', false));
+    });
 });
 
 describe('update', function () {
@@ -98,12 +111,14 @@ describe('update', function () {
                 'slug' => 'seguranca',
                 'summary' => 'Boas práticas.',
                 'description' => 'Conteúdo completo.',
+                'category' => 'Compliance',
                 'status' => 'published',
             ]);
 
         $response->assertRedirect(route('admin.courses.edit', $course));
         expect($course->fresh())
             ->title->toBe('Segurança da informação')
+            ->category->toBe('Compliance')
             ->slug->toBe('seguranca')
             ->status->toBe(PublicationStatus::Published)
             ->published_at->toEqual(now());
@@ -173,10 +188,11 @@ describe('update', function () {
 
 describe('destroy', function () {
     test('deletes the course with its content and files', function () {
-        $course = Course::factory()->withCover()->create();
+        $course = Course::factory()->withCover()->featured()->create();
         $lesson = Lesson::factory()->for(Module::factory()->for($course))->create();
         $attachment = LessonAttachment::factory()->for($lesson)->create();
         Storage::put($course->cover_path, 'capa');
+        Storage::put($course->banner_path, 'banner');
         Storage::put($attachment->path, 'pdf');
 
         $response = $this->actingAs(User::factory()->admin()->create())
@@ -186,6 +202,6 @@ describe('destroy', function () {
         $this->assertModelMissing($course);
         $this->assertModelMissing($lesson);
         $this->assertModelMissing($attachment);
-        Storage::assertMissing([$course->cover_path, $attachment->path]);
+        Storage::assertMissing([$course->cover_path, $course->banner_path, $attachment->path]);
     });
 });

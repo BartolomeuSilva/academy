@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { Form, Head, Link, router } from '@inertiajs/vue3';
-import { Eye, Trash2 } from '@lucide/vue';
+import { Form, Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Eye, Star, StarOff, Trash2 } from '@lucide/vue';
+import { computed } from 'vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import CourseContentEditor from '@/components/CourseContentEditor.vue';
-import CourseCoverCard from '@/components/CourseCoverCard.vue';
+import CourseImageCard from '@/components/CourseImageCard.vue';
 import InputError from '@/components/InputError.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
 import { Button } from '@/components/ui/button';
@@ -11,13 +12,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { destroy, edit, index, update } from '@/routes/admin/courses';
+import banner from '@/routes/admin/courses/banner';
+import cover from '@/routes/admin/courses/cover';
+import feature from '@/routes/admin/courses/feature';
 import { show as showCourse } from '@/routes/courses';
 import type { AdminCourse, AdminModule } from '@/types';
 
 const props = defineProps<{
     course: AdminCourse;
     modules: AdminModule[];
+    categories: string[];
 }>();
+
+const bannerError = computed(
+    () => usePage().props.errors.banner as string | undefined,
+);
 
 defineOptions({
     layout: (props: { course: AdminCourse }) => ({
@@ -30,6 +39,20 @@ defineOptions({
 
 function removeCourse(close: () => void): void {
     router.delete(destroy.url(props.course.id), { onSuccess: close });
+}
+
+function toggleFeatured(): void {
+    if (props.course.featured) {
+        router.delete(feature.destroy.url(props.course.id), {
+            preserveScroll: true,
+        });
+    } else {
+        router.post(
+            feature.store.url(props.course.id),
+            {},
+            { preserveScroll: true },
+        );
+    }
 }
 </script>
 
@@ -113,6 +136,30 @@ function removeCourse(close: () => void): void {
                         </div>
 
                         <div class="grid gap-2">
+                            <Label for="category">Categoria</Label>
+                            <Input
+                                id="category"
+                                name="category"
+                                list="course-categories"
+                                :default-value="course.category ?? ''"
+                                placeholder="Ex.: Vendas, Atendimento"
+                                maxlength="80"
+                            />
+                            <datalist id="course-categories">
+                                <option
+                                    v-for="category in categories"
+                                    :key="category"
+                                    :value="category"
+                                />
+                            </datalist>
+                            <p class="text-xs text-muted-foreground">
+                                Cursos da mesma categoria formam uma fileira na
+                                vitrine.
+                            </p>
+                            <InputError :message="errors.category" />
+                        </div>
+
+                        <div class="grid gap-2">
                             <Label for="status">Status</Label>
                             <select
                                 id="status"
@@ -136,10 +183,50 @@ function removeCourse(close: () => void): void {
                     </Form>
                 </section>
 
-                <CourseCoverCard
-                    :course-id="course.id"
-                    :cover-url="course.cover_url"
+                <CourseImageCard
+                    title="Capa"
+                    field="cover"
+                    :image-url="course.cover_url"
+                    :upload-url="cover.store.url(course.id)"
+                    :remove-url="cover.destroy.url(course.id)"
+                    hint="JPG, PNG ou WEBP até 5 MB. Formato vertical 2:3 (ex.: 800 × 1200 px)."
+                    preview-class="mx-auto aspect-[2/3] w-40"
                 />
+
+                <CourseImageCard
+                    title="Banner"
+                    field="banner"
+                    :image-url="course.banner_url"
+                    :upload-url="banner.store.url(course.id)"
+                    :remove-url="banner.destroy.url(course.id)"
+                    hint="Imagem larga do destaque no topo da vitrine. JPG, PNG ou WEBP até 5 MB (ex.: 1920 × 820 px). Deixe o lado esquerdo mais limpo: o título aparece ali."
+                    preview-class="aspect-[21/9]"
+                    :error="bannerError"
+                >
+                    <div class="border-t pt-3">
+                        <Button
+                            type="button"
+                            :variant="course.featured ? 'secondary' : 'default'"
+                            size="sm"
+                            :disabled="!course.banner_url"
+                            data-test="toggle-featured-button"
+                            @click="toggleFeatured"
+                        >
+                            <template v-if="course.featured">
+                                <StarOff /> Tirar do destaque
+                            </template>
+                            <template v-else>
+                                <Star /> Destacar na vitrine
+                            </template>
+                        </Button>
+                        <p
+                            v-if="course.featured"
+                            class="mt-2 text-xs text-muted-foreground"
+                        >
+                            Este curso aparece no banner do topo da vitrine.
+                        </p>
+                    </div>
+                </CourseImageCard>
 
                 <section
                     class="space-y-3 rounded-xl border border-destructive/30 p-4"

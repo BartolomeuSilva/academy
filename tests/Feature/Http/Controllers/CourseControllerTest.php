@@ -52,6 +52,29 @@ test('catalog cards count only visible lessons and the student own completions',
             ->where('courses.0.started', true));
 });
 
+test('the catalog features the spotlighted course and tells each course category', function () {
+    $featured = Course::factory()->published()->featured()->create(['category' => 'Vendas']);
+    visibleLesson(Module::factory()->for($featured)->create());
+    $hiddenFeatured = Course::factory()->featured()->create();
+    visibleLesson(Module::factory()->for($hiddenFeatured)->create());
+
+    $this->actingAs(User::factory()->create())
+        ->get(route('courses.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('featured.id', $featured->id)
+            ->where('featured.banner_url', fn (string $url) => str_contains($url, $featured->banner_path))
+            ->where('courses.0.category', 'Vendas'));
+});
+
+test('a featured course outside the catalog is not featured', function () {
+    $course = Course::factory()->featured()->create();
+    visibleLesson(Module::factory()->for($course)->create());
+
+    $this->actingAs(User::factory()->create())
+        ->get(route('courses.index'))
+        ->assertInertia(fn (Assert $page) => $page->where('featured', null));
+});
+
 test('a course counts as started once the student watched any visible lesson', function () {
     $student = User::factory()->create();
     $course = Course::factory()->published()->create();

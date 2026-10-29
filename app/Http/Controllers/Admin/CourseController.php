@@ -81,9 +81,13 @@ class CourseController extends Controller
                 'slug' => $course->slug,
                 'summary' => $course->summary,
                 'description' => $course->description,
+                'category' => $course->category,
                 'status' => $course->status,
                 'cover_url' => $course->coverUrl(),
+                'banner_url' => $course->bannerUrl(),
+                'featured' => $course->featured_at !== null,
             ],
+            'categories' => Course::query()->whereNotNull('category')->distinct()->orderBy('category')->pluck('category'),
             'modules' => $course->modules->map(fn (Module $module) => [
                 'id' => $module->id,
                 'title' => $module->title,

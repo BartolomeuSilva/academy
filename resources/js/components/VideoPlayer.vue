@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { PictureInPicture2 } from '@lucide/vue';
 import Hls from 'hls.js';
 import { onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue';
+import { Button } from '@/components/ui/button';
 
 const props = defineProps<{
     src: string;
@@ -19,6 +21,16 @@ const video = useTemplateRef('video');
 const levels = ref<{ index: number; label: string }[]>([]);
 const selectedLevel = ref(-1);
 const failed = ref(false);
+const canFloat =
+    typeof document !== 'undefined' && document.pictureInPictureEnabled;
+
+function toggleFloating(): void {
+    if (document.pictureInPictureElement) {
+        void document.exitPictureInPicture();
+    } else {
+        void video.value?.requestPictureInPicture();
+    }
+}
 let hls: Hls | null = null;
 
 function load(): void {
@@ -111,27 +123,43 @@ onBeforeUnmount(() => hls?.destroy());
         </p>
 
         <div
-            v-if="levels.length > 1"
-            class="flex items-center justify-end gap-2 text-sm"
+            v-if="canFloat || levels.length > 1"
+            class="flex flex-wrap items-center gap-2 text-sm"
         >
-            <label for="video-quality" class="text-muted-foreground">
-                Qualidade
-            </label>
-            <select
-                id="video-quality"
-                :value="selectedLevel"
-                class="h-8 rounded-md border border-input bg-transparent px-2 text-sm dark:bg-input/30"
-                @change="changeLevel"
+            <Button
+                v-if="canFloat"
+                type="button"
+                variant="ghost"
+                size="sm"
+                class="text-muted-foreground"
+                data-test="floating-video-button"
+                @click="toggleFloating"
             >
-                <option :value="-1">Automática</option>
-                <option
-                    v-for="level in levels"
-                    :key="level.index"
-                    :value="level.index"
+                <PictureInPicture2 /> Assistir em janela flutuante
+            </Button>
+            <template v-if="levels.length > 1">
+                <label
+                    for="video-quality"
+                    class="ml-auto text-muted-foreground"
                 >
-                    {{ level.label }}
-                </option>
-            </select>
+                    Qualidade
+                </label>
+                <select
+                    id="video-quality"
+                    :value="selectedLevel"
+                    class="h-8 rounded-md border border-input bg-transparent px-2 text-sm dark:bg-input/30"
+                    @change="changeLevel"
+                >
+                    <option :value="-1">Automática</option>
+                    <option
+                        v-for="level in levels"
+                        :key="level.index"
+                        :value="level.index"
+                    >
+                        {{ level.label }}
+                    </option>
+                </select>
+            </template>
         </div>
     </div>
 </template>

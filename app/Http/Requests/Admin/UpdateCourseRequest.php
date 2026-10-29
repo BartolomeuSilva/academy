@@ -25,6 +25,7 @@ class UpdateCourseRequest extends FormRequest
             'slug' => ['required', 'string', 'max:160', 'alpha_dash:ascii', 'lowercase', Rule::unique('courses', 'slug')->ignore($course)],
             'summary' => ['required', 'string', 'max:300'],
             'description' => ['nullable', 'string', 'max:10000'],
+            'category' => ['nullable', 'string', 'max:80'],
             'status' => ['required', Rule::enum(PublicationStatus::class)],
         ];
     }

@@ -20,8 +20,11 @@ export type AdminCourse = {
     slug: string;
     summary: string;
     description: string | null;
+    category: string | null;
     status: PublicationStatus;
     cover_url: string | null;
+    banner_url: string | null;
+    featured: boolean;
 };
 
 export type AdminLessonListItem = {

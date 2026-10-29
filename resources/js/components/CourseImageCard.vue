@@ -4,17 +4,22 @@ import { ImageUp, Trash2 } from '@lucide/vue';
 import { ref, useTemplateRef } from 'vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
-import { destroy, store } from '@/routes/admin/courses/cover';
 
 const props = defineProps<{
-    courseId: number;
-    coverUrl: string | null;
+    title: string;
+    field: 'cover' | 'banner';
+    imageUrl: string | null;
+    uploadUrl: string;
+    removeUrl: string;
+    hint: string;
+    previewClass: string;
+    error?: string;
 }>();
 
 const fileInput = useTemplateRef('fileInput');
 const uploading = ref(false);
 const progress = ref<number | null>(null);
-const error = ref<string | undefined>();
+const uploadError = ref<string | undefined>();
 
 function upload(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
@@ -24,16 +29,16 @@ function upload(event: Event): void {
     }
 
     router.post(
-        store.url(props.courseId),
-        { cover: file },
+        props.uploadUrl,
+        { [props.field]: file },
         {
             preserveScroll: true,
             onStart: () => {
                 uploading.value = true;
-                error.value = undefined;
+                uploadError.value = undefined;
             },
             onProgress: (event) => (progress.value = event?.percentage ?? null),
-            onError: (errors) => (error.value = errors.cover),
+            onError: (errors) => (uploadError.value = errors[props.field]),
             onFinish: () => {
                 uploading.value = false;
                 progress.value = null;
@@ -47,7 +52,7 @@ function upload(event: Event): void {
 }
 
 function remove(): void {
-    router.delete(destroy.url(props.courseId), { preserveScroll: true });
+    router.delete(props.removeUrl, { preserveScroll: true });
 }
 </script>
 
@@ -55,26 +60,24 @@ function remove(): void {
     <section
         class="space-y-3 rounded-xl border bg-card p-4 text-card-foreground"
     >
-        <h2 class="font-medium">Capa</h2>
+        <h2 class="font-medium">{{ title }}</h2>
 
-        <div class="aspect-video overflow-hidden rounded-lg bg-muted">
+        <div class="overflow-hidden rounded-lg bg-muted" :class="previewClass">
             <img
-                v-if="coverUrl"
-                :src="coverUrl"
-                alt="Capa do curso"
+                v-if="imageUrl"
+                :src="imageUrl"
+                :alt="title"
                 class="size-full object-cover"
             />
             <div
                 v-else
                 class="flex size-full items-center justify-center text-sm text-muted-foreground"
             >
-                Sem capa
+                Sem imagem
             </div>
         </div>
 
-        <p class="text-xs text-muted-foreground">
-            JPG, PNG ou WEBP até 5 MB. Proporção recomendada 16:9.
-        </p>
+        <p class="text-xs text-muted-foreground">{{ hint }}</p>
 
         <div
             v-if="progress !== null"
@@ -82,15 +85,15 @@ function remove(): void {
         >
             <div class="h-full bg-primary" :style="{ width: `${progress}%` }" />
         </div>
-        <InputError :message="error" />
+        <InputError :message="uploadError ?? error" />
 
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-2">
             <input
                 ref="fileInput"
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 class="hidden"
-                data-test="cover-input"
+                :data-test="`${field}-input`"
                 @change="upload"
             />
             <Button
@@ -100,10 +103,11 @@ function remove(): void {
                 :disabled="uploading"
                 @click="fileInput?.click()"
             >
-                <ImageUp /> {{ coverUrl ? 'Trocar capa' : 'Enviar capa' }}
+                <ImageUp /> {{ imageUrl ? 'Trocar' : 'Enviar' }}
+                {{ title.toLowerCase() }}
             </Button>
             <Button
-                v-if="coverUrl"
+                v-if="imageUrl"
                 type="button"
                 variant="ghost"
                 size="sm"
@@ -113,5 +117,7 @@ function remove(): void {
                 <Trash2 /> Remover
             </Button>
         </div>
+
+        <slot />
     </section>
 </template>
