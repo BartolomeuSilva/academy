@@ -12,6 +12,7 @@ use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\Module;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -48,7 +49,9 @@ class CourseController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('admin/courses/Create');
+        return Inertia::render('admin/courses/Create', [
+            'categories' => $this->categories(),
+        ]);
     }
 
     /**
@@ -88,7 +91,7 @@ class CourseController extends Controller
                 'banner_mobile_url' => $course->bannerMobileUrl(),
                 'featured' => $course->featured_at !== null,
             ],
-            'categories' => Course::query()->whereNotNull('category')->distinct()->orderBy('category')->pluck('category'),
+            'categories' => $this->categories(),
             'modules' => $course->modules->map(fn (Module $module) => [
                 'id' => $module->id,
                 'title' => $module->title,
@@ -135,5 +138,15 @@ class CourseController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Curso excluído.']);
 
         return to_route('admin.courses.index');
+    }
+
+    /**
+     * The categories already in use, offered as suggestions.
+     *
+     * @return Collection<int, string>
+     */
+    private function categories(): Collection
+    {
+        return Course::query()->whereNotNull('category')->distinct()->orderBy('category')->pluck('category');
     }
 }

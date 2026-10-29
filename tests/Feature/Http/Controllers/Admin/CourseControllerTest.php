@@ -51,6 +51,23 @@ describe('store', function () {
             ->position->toBe(5);
     });
 
+    test('creates the course in a category, suggesting the ones in use', function () {
+        Course::factory()->create(['category' => 'Vendas']);
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->get(route('admin.courses.create'))
+            ->assertInertia(fn (Assert $page) => $page->where('categories', ['Vendas']));
+
+        $this->actingAs($admin)->post(route('admin.courses.store'), [
+            'title' => 'Negociação',
+            'summary' => 'Técnicas de negociação.',
+            'category' => 'Vendas',
+        ]);
+
+        expect(Course::query()->where('title', 'Negociação')->sole()->category)->toBe('Vendas');
+    });
+
     test('requires a title and a summary', function () {
         $response = $this->actingAs(User::factory()->admin()->create())
             ->post(route('admin.courses.store'), []);

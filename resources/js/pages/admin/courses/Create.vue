@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link } from '@inertiajs/vue3';
+import CourseCategoryField from '@/components/CourseCategoryField.vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { create, index, store } from '@/routes/admin/courses';
+
+defineProps<{
+    categories: string[];
+}>();
 
 defineOptions({
     layout: {
@@ -55,6 +60,11 @@ defineOptions({
                 <Textarea id="description" name="description" rows="6" />
                 <InputError :message="errors.description" />
             </div>
+
+            <CourseCategoryField
+                :categories="categories"
+                :error="errors.category"
+            />
 
             <div class="flex items-center gap-3">
                 <Button

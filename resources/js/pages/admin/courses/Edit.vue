@@ -3,6 +3,7 @@ import { Form, Head, Link, router, usePage } from '@inertiajs/vue3';
 import { Eye, Star, StarOff, Trash2 } from '@lucide/vue';
 import { computed } from 'vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
+import CourseCategoryField from '@/components/CourseCategoryField.vue';
 import CourseContentEditor from '@/components/CourseContentEditor.vue';
 import CourseImageCard from '@/components/CourseImageCard.vue';
 import InputError from '@/components/InputError.vue';
@@ -135,29 +136,11 @@ function toggleFeatured(): void {
                             <InputError :message="errors.description" />
                         </div>
 
-                        <div class="grid gap-2">
-                            <Label for="category">Categoria</Label>
-                            <Input
-                                id="category"
-                                name="category"
-                                list="course-categories"
-                                :default-value="course.category ?? ''"
-                                placeholder="Ex.: Vendas, Atendimento"
-                                maxlength="80"
-                            />
-                            <datalist id="course-categories">
-                                <option
-                                    v-for="category in categories"
-                                    :key="category"
-                                    :value="category"
-                                />
-                            </datalist>
-                            <p class="text-xs text-muted-foreground">
-                                Cursos da mesma categoria formam uma fileira na
-                                vitrine.
-                            </p>
-                            <InputError :message="errors.category" />
-                        </div>
+                        <CourseCategoryField
+                            :categories="categories"
+                            :default-value="course.category"
+                            :error="errors.category"
+                        />
 
                         <div class="grid gap-2">
                             <Label for="status">Status</Label>

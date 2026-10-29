@@ -18,6 +18,7 @@ class StoreCourseRequest extends FormRequest
             'title' => ['required', 'string', 'max:150'],
             'summary' => ['required', 'string', 'max:300'],
             'description' => ['nullable', 'string', 'max:10000'],
+            'category' => ['nullable', 'string', 'max:80'],
         ];
     }
 }
