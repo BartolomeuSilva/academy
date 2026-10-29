@@ -41,8 +41,11 @@ class LessonController extends Controller
 
         return Inertia::render('lessons/Show', [
             'course' => [
+                'id' => $course->id,
                 'slug' => $course->slug,
                 'title' => $course->title,
+                'summary' => $course->summary,
+                'description_html' => $course->descriptionHtml(),
             ],
             'lesson' => [
                 'id' => $lesson->id,

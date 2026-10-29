@@ -48,27 +48,22 @@ test('catalog cards count only visible lessons and the student own completions',
         ->assertInertia(fn (Assert $page) => $page
             ->where('courses.0.lessons_count', 2)
             ->where('courses.0.completed_lessons_count', 1)
-            ->where('courses.0.duration_seconds', 720));
+            ->where('courses.0.duration_seconds', 720)
+            ->where('courses.0.started', true));
 });
 
-test('the course page lists the modules and lessons a student may watch', function () {
+test('a course counts as started once the student watched any visible lesson', function () {
+    $student = User::factory()->create();
     $course = Course::factory()->published()->create();
-    $module = Module::factory()->for($course)->create(['title' => 'Introdução', 'position' => 1]);
-    visibleLesson($module, ['title' => 'Boas-vindas', 'position' => 1]);
-    Lesson::factory()->for($module)->withVideo()->create(['title' => 'Rascunho']);
-    Lesson::factory()->for($module)->published()->create(['title' => 'Sem vídeo']);
-    Lesson::factory()->for(Module::factory()->for($course)->create(['title' => 'Vazio', 'position' => 2]))->create();
+    $module = Module::factory()->for($course)->create();
+    visibleLesson($module);
+    $draft = Lesson::factory()->for($module)->withVideo()->create();
+    LessonProgress::factory()->for($student)->for($draft)->create();
+    LessonProgress::factory()->for(User::factory())->for(visibleLesson($module))->create();
 
-    $this->actingAs(User::factory()->create())
-        ->get(route('courses.show', $course->slug))
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('courses/Show')
-            ->has('modules', 1)
-            ->where('modules.0.title', 'Introdução')
-            ->has('modules.0.lessons', 1)
-            ->where('modules.0.lessons.0.title', 'Boas-vindas')
-            ->where('modules.0.lessons.0.duration_seconds', 600)
-            ->where('progress.total', 1));
+    $this->actingAs($student)
+        ->get(route('courses.index'))
+        ->assertInertia(fn (Assert $page) => $page->where('courses.0.started', false));
 });
 
 test('students get not found for courses outside the catalog', function () {
@@ -81,19 +76,25 @@ test('students get not found for courses outside the catalog', function () {
     $this->actingAs($student)->get(route('courses.show', $empty->slug))->assertNotFound();
 });
 
-test('admins preview draft courses with every lesson', function () {
+test('admins preview draft courses from their first lesson', function () {
     $course = Course::factory()->create();
-    Lesson::factory()->for(Module::factory()->for($course))->create();
+    $lesson = Lesson::factory()->for(Module::factory()->for($course))->create();
 
     $this->actingAs(User::factory()->admin()->create())
         ->get(route('courses.show', $course->slug))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('course.status', 'draft')
-            ->has('modules.0.lessons', 1));
+        ->assertRedirect(route('lessons.show', [$course->slug, $lesson->slug]));
 });
 
-test('the resume button points to the right lesson', function (array $progress, ?int $expectedIndex, bool $started) {
+test('admins opening a course without lessons go back to editing it', function () {
+    $course = Course::factory()->create();
+
+    $this->actingAs(User::factory()->admin()->create())
+        ->get(route('courses.show', $course->slug))
+        ->assertRedirect(route('admin.courses.edit', $course))
+        ->assertInertiaFlash('toast.message', 'Este curso ainda não tem aulas.');
+});
+
+test('opening a course goes to the lesson to continue from', function (array $progress, int $expectedIndex) {
     $student = User::factory()->create();
     $course = Course::factory()->published()->create();
     $module = Module::factory()->for($course)->create();
@@ -108,28 +109,14 @@ test('the resume button points to the right lesson', function (array $progress, 
 
     $this->actingAs($student)
         ->get(route('courses.show', $course->slug))
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('resume.lesson.id', $lessons[$expectedIndex]->id)
-            ->where('resume.started', $started));
+        ->assertRedirect(route('lessons.show', [$course->slug, $lessons[$expectedIndex]->slug]));
 })->with([
-    'not started' => [[], 0, false],
-    'last watched lesson unfinished' => [[0 => [true, 10], 1 => [false, 1]], 1, true],
-    'last watched lesson finished' => [[0 => [false, 10], 1 => [true, 1]], 2, true],
-    'finished the last lesson, an earlier one is open' => [[0 => [false, 10], 1 => [true, 5], 2 => [true, 1]], 0, true],
-    'everything finished' => [[0 => [true, 3], 1 => [true, 2], 2 => [true, 1]], 0, true],
+    'not started' => [[], 0],
+    'last watched lesson unfinished' => [[0 => [true, 10], 1 => [false, 1]], 1],
+    'last watched lesson finished' => [[0 => [false, 10], 1 => [true, 1]], 2],
+    'finished the last lesson, an earlier one is open' => [[0 => [false, 10], 1 => [true, 5], 2 => [true, 1]], 0],
+    'everything finished' => [[0 => [true, 3], 1 => [true, 2], 2 => [true, 1]], 0],
 ]);
-
-test('course descriptions are rendered without raw html', function () {
-    $course = Course::factory()->published()->create(['description' => "**Bem-vindo**\n\n<script>alert(1)</script>\n\n[x](javascript:alert(1))"]);
-    visibleLesson(Module::factory()->for($course)->create());
-
-    $this->actingAs(User::factory()->create())
-        ->get(route('courses.show', $course->slug))
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('course.description_html', fn (string $html) => str_contains($html, '<strong>Bem-vindo</strong>')
-                && ! str_contains($html, '<script>')
-                && ! str_contains($html, 'javascript:')));
-});
 
 test('signed in users go from the home page to the catalog', function () {
     $this->actingAs(User::factory()->create())->get(route('home'))->assertRedirect(route('courses.index'));

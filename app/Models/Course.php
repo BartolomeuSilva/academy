@@ -32,6 +32,7 @@ use Illuminate\Support\Str;
  * @property-read Collection<int, Lesson> $lessons
  * @property-read int|null $completed_lessons_count Loaded by the catalog query.
  * @property-read int|string|null $duration_seconds Loaded by the catalog query.
+ * @property-read bool|null $started Loaded by the catalog query.
  */
 #[Fillable(['title', 'slug', 'summary', 'description'])]
 class Course extends Model

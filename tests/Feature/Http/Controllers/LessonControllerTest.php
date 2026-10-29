@@ -84,3 +84,33 @@ test('admins preview draft lessons without a video', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->where('video', null));
 });
+
+test('the lesson menu lists only the modules and lessons a student may watch', function () {
+    $course = Course::factory()->published()->create();
+    $module = Module::factory()->for($course)->create(['title' => 'Introdução', 'position' => 1]);
+    $lesson = visibleLesson($module, ['title' => 'Boas-vindas', 'position' => 1]);
+    Lesson::factory()->for($module)->withVideo()->create(['title' => 'Rascunho']);
+    Lesson::factory()->for($module)->published()->create(['title' => 'Sem vídeo']);
+    Lesson::factory()->for(Module::factory()->for($course)->create(['title' => 'Vazio', 'position' => 2]))->create();
+
+    $this->actingAs(User::factory()->create())
+        ->get(route('lessons.show', [$course->slug, $lesson->slug]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('modules', 1)
+            ->where('modules.0.title', 'Introdução')
+            ->has('modules.0.lessons', 1)
+            ->where('modules.0.lessons.0.title', 'Boas-vindas')
+            ->where('modules.0.lessons.0.duration_seconds', 600));
+});
+
+test('the course description is rendered without raw html', function () {
+    $course = Course::factory()->published()->create(['description' => "**Bem-vindo**\n\n<script>alert(1)</script>\n\n[x](javascript:alert(1))"]);
+    $lesson = visibleLesson(Module::factory()->for($course)->create());
+
+    $this->actingAs(User::factory()->create())
+        ->get(route('lessons.show', [$course->slug, $lesson->slug]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('course.description_html', fn (string $html) => str_contains($html, '<strong>Bem-vindo</strong>')
+                && ! str_contains($html, '<script>')
+                && ! str_contains($html, 'javascript:')));
+});

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Menu } from '@lucide/vue';
+import { BookOpen, Menu, Settings2 } from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
@@ -28,6 +28,7 @@ import {
 import UserMenuContent from '@/components/UserMenuContent.vue';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { getInitials } from '@/composables/useInitials';
+import { index as adminCourses } from '@/routes/admin/courses';
 import { index as catalog } from '@/routes/courses';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
@@ -54,6 +55,15 @@ const mainNavItems = computed<NavItem[]>(() => [
         href: catalogUrl,
         icon: BookOpen,
     },
+    ...(auth.value.user?.role === 'admin'
+        ? [
+              {
+                  title: 'Administração',
+                  href: adminCourses().url,
+                  icon: Settings2,
+              },
+          ]
+        : []),
 ]);
 </script>
 

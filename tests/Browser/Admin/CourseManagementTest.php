@@ -2,6 +2,7 @@
 
 use App\Models\Course;
 use App\Models\Lesson;
+use App\Models\Module;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 
@@ -30,9 +31,10 @@ test('an admin builds a course with a module and a lesson', function () {
     expect($lesson->course->title)->toBe('Onboarding');
 });
 
-test('an admin opens a course for editing from the list and from the course page', function () {
+test('an admin opens a course for editing from the list and a lesson from the player', function () {
     Storage::fake();
     $course = Course::factory()->create(['title' => 'Segurança']);
+    $lesson = Lesson::factory()->for(Module::factory()->for($course))->create();
     $this->actingAs(User::factory()->admin()->create());
 
     visit('/admin/cursos')
@@ -46,8 +48,9 @@ test('an admin opens a course for editing from the list and from the course page
     expect($course->fresh()->title)->toBe('Segurança da Informação');
 
     visit("/cursos/{$course->slug}")
-        ->click('@edit-course-link')
-        ->assertPathIs("/admin/cursos/{$course->id}/editar");
+        ->assertPathIs("/cursos/{$course->slug}/aulas/{$lesson->slug}")
+        ->click('@edit-lesson-link')
+        ->assertPathIs("/admin/aulas/{$lesson->id}/editar");
 });
 
 test('admin pages have no accessibility issues in light and dark mode', function () {

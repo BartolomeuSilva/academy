@@ -9,6 +9,7 @@ export type CatalogCourse = {
     lessons_count: number;
     completed_lessons_count: number;
     duration_seconds: number;
+    started: boolean;
 };
 
 export type OutlineLesson = {
@@ -25,25 +26,12 @@ export type OutlineModule = {
     lessons: OutlineLesson[];
 };
 
-export type CourseDetails = {
+export type LessonCourse = {
     id: number;
     slug: string;
     title: string;
     summary: string;
     description_html: string | null;
-    cover_url: string | null;
-    status: PublicationStatus;
-};
-
-export type CourseProgress = {
-    completed: number;
-    total: number;
-    duration_seconds: number;
-};
-
-export type ResumeLesson = {
-    lesson: OutlineLesson;
-    started: boolean;
 };
 
 export type LessonDetails = {

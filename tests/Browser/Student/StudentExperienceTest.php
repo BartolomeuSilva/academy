@@ -31,22 +31,34 @@ test('a student goes from the catalog to a lesson and completes it', function ()
     $student = User::factory()->create();
     $this->actingAs($student);
 
+    $first = $course->lessons()->orderBy('position')->first();
+
     visit('/cursos')
         ->assertSee('Onboarding')
-        ->assertSee('2 aulas')
+        ->assertSee('Primeiros passos na empresa.')
+        ->assertDontSee('Continue assistindo')
         ->click('@catalog-course')
-        ->assertPathIs("/cursos/{$course->slug}")
-        ->assertSee('Começar curso')
-        ->click('@resume-course-link')
+        ->assertPathIs("/cursos/{$course->slug}/aulas/{$first->slug}")
         ->assertSee('Conheça a empresa')
+        ->assertSee('0 de 2 aulas concluídas')
+        ->click('@tab-materials')
         ->assertSee('Manual.pdf')
         ->click('@toggle-completed-button')
         ->assertSee('Aula concluída')
         ->click('@next-lesson-link')
         ->assertSee('Nossos valores')
+        ->assertSee('1 de 2 aulas concluídas')
         ->assertNoJavaScriptErrors();
 
     expect($student->lessonProgress()->whereNotNull('completed_at')->count())->toBe(1);
+
+    $second = $course->lessons()->where('title', 'Nossos valores')->sole();
+
+    visit('/cursos')
+        ->assertSee('Continue assistindo')
+        ->assertSee('50% concluído')
+        ->click('@continue-course')
+        ->assertPathIs("/cursos/{$course->slug}/aulas/{$second->slug}");
 });
 
 test('student pages have no accessibility issues in light and dark mode', function () {
@@ -54,7 +66,7 @@ test('student pages have no accessibility issues in light and dark mode', functi
     $lesson = $course->lessons()->orderBy('position')->first();
     $this->actingAs(User::factory()->create());
 
-    $urls = ['/cursos', "/cursos/{$course->slug}", "/cursos/{$course->slug}/aulas/{$lesson->slug}"];
+    $urls = ['/cursos', "/cursos/{$course->slug}/aulas/{$lesson->slug}"];
 
     visit($urls)->assertNoSmoke()->assertNoAccessibilityIssues();
 
@@ -72,5 +84,7 @@ test('the lesson page works on a phone', function () {
         ->on()->mobile()
         ->assertSee('Conheça a empresa')
         ->assertSee('Marcar como concluída')
+        ->click('@tab-lessons')
+        ->assertSee('Nossos valores')
         ->assertNoSmoke();
 });

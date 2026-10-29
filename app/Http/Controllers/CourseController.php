@@ -7,6 +7,7 @@ use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\Video;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -28,6 +29,10 @@ class CourseController extends Controller
                     ->visible()
                     ->whereHas('progress', fn (Builder $progress) => $progress->whereBelongsTo($user)->whereNotNull('completed_at')),
             ])
+            ->withExists([
+                'lessons as started' => fn (Builder $lessons) => $this->visibleLessons($lessons)
+                    ->whereHas('progress', fn (Builder $progress) => $progress->whereBelongsTo($user)),
+            ])
             ->addSelect(['duration_seconds' => Video::query()
                 ->selectRaw('coalesce(sum(videos.duration_seconds), 0)')
                 ->join('lessons', 'lessons.video_id', '=', 'videos.id')
@@ -47,6 +52,7 @@ class CourseController extends Controller
                 'lessons_count' => $course->lessons_count,
                 'completed_lessons_count' => $course->completed_lessons_count,
                 'duration_seconds' => (int) $course->duration_seconds,
+                'started' => (bool) $course->started,
             ]),
         ]);
     }
@@ -61,31 +67,20 @@ class CourseController extends Controller
     }
 
     /**
-     * Show the course with its modules, lessons and the lesson to continue from.
+     * Open the course at the lesson the student should watch next.
      */
-    public function show(Request $request, Course $course, BuildCourseOutline $buildCourseOutline): Response
+    public function show(Request $request, Course $course, BuildCourseOutline $buildCourseOutline): RedirectResponse
     {
         abort_unless($request->user()->can('view', $course), 404);
 
-        $outline = $buildCourseOutline->handle($course, $request->user());
+        $resume = $buildCourseOutline->handle($course, $request->user())['resume'];
 
-        return Inertia::render('courses/Show', [
-            'course' => [
-                'id' => $course->id,
-                'slug' => $course->slug,
-                'title' => $course->title,
-                'summary' => $course->summary,
-                'description_html' => $course->descriptionHtml(),
-                'cover_url' => $course->coverUrl(),
-                'status' => $course->status,
-            ],
-            'modules' => $outline['modules'],
-            'progress' => [
-                'completed' => $outline['completed_count'],
-                'total' => count($outline['lessons']),
-                'duration_seconds' => array_sum(array_column($outline['lessons'], 'duration_seconds')),
-            ],
-            'resume' => $outline['resume'],
-        ]);
+        if ($resume === null) {
+            Inertia::flash('toast', ['type' => 'info', 'message' => 'Este curso ainda não tem aulas.']);
+
+            return to_route('admin.courses.edit', $course);
+        }
+
+        return to_route('lessons.show', [$course, $resume['lesson']['slug']]);
     }
 }

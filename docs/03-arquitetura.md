@@ -43,7 +43,7 @@ lang/pt_BR/           # validation.php, auth.php, passwords.php, pagination.php
 | ----------------- | ------------------------------------------- | -------------------------------------------------------- |
 | GET               | `/`                                         | Landing (visitante) / redireciona para catálogo (logado) |
 | GET               | `/cursos`                                   | Catálogo (`/dashboard` redireciona para cá)              |
-| GET               | `/cursos/{course:slug}`                     | Página do curso                                          |
+| GET               | `/cursos/{course:slug}`                     | Abre o curso na aula a continuar (redireciona)           |
 | GET               | `/cursos/{course:slug}/aulas/{lesson:slug}` | Página da aula                                           |
 | GET               | `/videos/{video}/{playlist}.m3u8`           | Playlist HLS reescrita com URLs assinadas                |
 | GET               | `/anexos/{attachment}[?download=1]`         | Redireciona para URL assinada (abrir ou baixar)          |
@@ -57,7 +57,9 @@ lang/pt_BR/           # validation.php, auth.php, passwords.php, pagination.php
 | PUT               | `/admin/usuarios/{user}/papel`              | Promove a Admin / rebaixa a Aluno                        |
 | POST/DELETE       | `/admin/usuarios/{user}/bloqueio`           | Bloqueia / desbloqueia                                   |
 
-Aluno recebe **404** (não 403) para curso, aula ou anexo fora do catálogo. Admin pré-visualiza rascunhos pelas mesmas páginas ("Ver como aluno").
+**Área do aluno:** barra superior (sem o menu lateral, que fica só na administração). A vitrine mostra capa, título e resumo, com "Continue assistindo" para cursos começados. Clicar no curso abre direto o player na aula a continuar; a lista de aulas fica à direita (aba "Aulas" no celular) e abaixo do vídeo há as abas Sobre, Materiais e Comentários. Ao terminar um vídeo, a próxima aula começa em 5 s, com opção de cancelar.
+
+Aluno recebe **404** (não 403) para curso, aula ou anexo fora do catálogo. Admin pré-visualiza rascunhos pelas mesmas páginas ("Ver como aluno") e tem atalho "Editar aula" no player.
 
 **Progresso:** o player salva a posição a cada 15 s de reprodução, ao pausar e ao sair da página (`fetch` com `keepalive`). A aula é concluída na primeira vez que a posição cruza 90% da duração; se o aluno desmarcar, ela não volta a ser concluída sozinha enquanto a posição continuar acima desse ponto. Ao reabrir, o vídeo retoma da posição salva, exceto nos 15 s finais (recomeça do início). "Continuar de onde parei" aponta para a última aula assistida, ou para a próxima não concluída se aquela já foi concluída.
 

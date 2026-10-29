@@ -11,6 +11,7 @@ const props = defineProps<{
 const emit = defineEmits<{
     timeupdate: [currentTime: number, duration: number];
     pause: [currentTime: number];
+    play: [];
     ended: [];
 }>();
 
@@ -76,7 +77,7 @@ onBeforeUnmount(() => hls?.destroy());
 
 <template>
     <div class="space-y-2">
-        <div class="overflow-hidden rounded-xl bg-black">
+        <div class="relative overflow-hidden rounded-xl bg-black">
             <video
                 ref="video"
                 class="aspect-video w-full"
@@ -98,8 +99,10 @@ onBeforeUnmount(() => hls?.destroy());
                         ($event.target as HTMLVideoElement).currentTime,
                     )
                 "
+                @play="emit('play')"
                 @ended="emit('ended')"
             />
+            <slot name="overlay" />
         </div>
 
         <p v-if="failed" class="text-sm text-destructive">

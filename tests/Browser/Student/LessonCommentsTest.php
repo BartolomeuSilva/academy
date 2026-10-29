@@ -17,6 +17,7 @@ test('a student comments, replies, edits and deletes on a lesson', function () {
     $this->actingAs($student);
 
     $page = visit("/cursos/{$lesson->course->slug}/aulas/{$lesson->slug}")
+        ->click('@tab-comments')
         ->assertSee('Onde fica o material?')
         ->click('@reply-comment-button')
         ->fill('@reply-input', 'Está na seção Materiais.')
