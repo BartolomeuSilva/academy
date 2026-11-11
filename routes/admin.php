@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\CommentController;
+use App\Http\Controllers\Admin\CommunityReportController;
+use App\Http\Controllers\Admin\CommunitySpaceController;
 use App\Http\Controllers\Admin\CourseBannerController;
 use App\Http\Controllers\Admin\CourseController;
 use App\Http\Controllers\Admin\CourseCoverController;
@@ -22,6 +24,14 @@ Route::middleware(['auth', 'verified', 'admin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
+        Route::get('comunidade/espacos', [CommunitySpaceController::class, 'index'])->name('community.spaces.index');
+        Route::post('comunidade/espacos', [CommunitySpaceController::class, 'store'])->name('community.spaces.store');
+        Route::put('comunidade/espacos/{space}', [CommunitySpaceController::class, 'update'])->name('community.spaces.update');
+        Route::delete('comunidade/espacos/{space}', [CommunitySpaceController::class, 'destroy'])->name('community.spaces.destroy');
+        Route::get('comunidade/denuncias', [CommunityReportController::class, 'index'])->name('community.reports.index');
+        Route::patch('comunidade/denuncias/{report}', [CommunityReportController::class, 'update'])->name('community.reports.update');
+        Route::delete('comunidade/denuncias/{report}', [CommunityReportController::class, 'destroy'])->name('community.reports.destroy');
+
         Route::put('cursos/ordem', [CourseOrderController::class, 'update'])->name('courses.order');
         Route::get('cursos', [CourseController::class, 'index'])->name('courses.index');
         Route::get('cursos/criar', [CourseController::class, 'create'])->name('courses.create');

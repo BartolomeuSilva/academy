@@ -54,3 +54,29 @@ export function formatDateTime(isoDate: string): string {
         timeStyle: 'short',
     });
 }
+
+/**
+ * Format an ISO date relative to now in Brazilian Portuguese (e.g. "há 5 minutos", "ontem").
+ */
+export function formatRelativeTime(isoDate: string): string {
+    const seconds = Math.round(
+        (new Date(isoDate).getTime() - Date.now()) / 1000,
+    );
+    const units: [Intl.RelativeTimeFormatUnit, number][] = [
+        ['year', 31536000],
+        ['month', 2592000],
+        ['week', 604800],
+        ['day', 86400],
+        ['hour', 3600],
+        ['minute', 60],
+    ];
+    const formatter = new Intl.RelativeTimeFormat('pt-BR', { numeric: 'auto' });
+
+    for (const [unit, size] of units) {
+        if (Math.abs(seconds) >= size) {
+            return formatter.format(Math.round(seconds / size), unit);
+        }
+    }
+
+    return 'agora mesmo';
+}

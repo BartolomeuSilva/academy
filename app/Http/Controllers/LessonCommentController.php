@@ -7,6 +7,7 @@ use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\UpdateCommentRequest;
 use App\Models\Comment;
 use App\Models\Lesson;
+use App\Notifications\LessonCommentReplied;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -24,6 +25,12 @@ class LessonCommentController extends Controller
         $comment->user()->associate($request->user());
         $comment->parent_id = $request->integer('parent_id') ?: null;
         $lesson->comments()->save($comment);
+
+        $parent = $comment->parent;
+
+        if ($parent !== null && $parent->user_id !== $comment->user_id) {
+            $parent->user->notify(new LessonCommentReplied($comment));
+        }
 
         return back();
     }

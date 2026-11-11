@@ -95,6 +95,13 @@ watch(completed, () => router.reload({ only: ['modules'] }));
 
 const viewedImage = ref<LessonMaterial | null>(null);
 
+/** Notifications and the community link straight to the comments with `?aba=comentarios`. */
+const initialTab =
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('aba') === 'comentarios'
+        ? 'comentarios'
+        : 'sobre';
+
 const player = useTemplateRef('player');
 const showResumeNotice = ref(props.progress.start_at_seconds > 0);
 let resumeNoticeTimer: ReturnType<typeof setTimeout> | undefined;
@@ -347,7 +354,7 @@ onBeforeUnmount(() => {
 
                 <LessonRatingCard :lesson-id="lesson.id" :rating="rating" />
 
-                <Tabs default-value="sobre" class="gap-4">
+                <Tabs :default-value="initialTab" class="gap-4">
                     <TabsList class="w-full justify-start sm:w-fit">
                         <TabsTrigger value="sobre" data-test="tab-about"
                             >Sobre</TabsTrigger

@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { GraduationCap, MessageSquare, Users } from '@lucide/vue';
+import {
+    Flag,
+    GraduationCap,
+    MessageSquare,
+    MessagesSquare,
+    Users,
+} from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -17,6 +23,8 @@ import {
 import { useStudentNav } from '@/composables/useStudentNav';
 import { index as catalog } from '@/routes/courses';
 import { index as adminComments } from '@/routes/admin/comments';
+import { index as adminReports } from '@/routes/admin/community/reports';
+import { index as adminSpaces } from '@/routes/admin/community/spaces';
 import { index as adminCourses } from '@/routes/admin/courses';
 import { index as adminUsers } from '@/routes/admin/users';
 import type { NavItem } from '@/types';
@@ -39,6 +47,16 @@ const adminNavItems = computed<NavItem[]>(() =>
                   title: 'Comentários',
                   href: adminComments(),
                   icon: MessageSquare,
+              },
+              {
+                  title: 'Espaços da comunidade',
+                  href: adminSpaces(),
+                  icon: MessagesSquare,
+              },
+              {
+                  title: 'Denúncias',
+                  href: adminReports(),
+                  icon: Flag,
               },
               {
                   title: 'Usuários',

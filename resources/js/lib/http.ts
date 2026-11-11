@@ -23,6 +23,25 @@ type RequestOptions = {
     keepalive?: boolean;
 };
 
+export async function getJson<T>(url: string): Promise<T> {
+    const response = await fetch(url, {
+        credentials: 'same-origin',
+        headers: {
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+    });
+
+    if (!response.ok) {
+        throw new HttpError(
+            'Algo deu errado. Tente novamente.',
+            response.status,
+        );
+    }
+
+    return (await response.json()) as T;
+}
+
 export function postJson<T>(
     url: string,
     body: unknown,

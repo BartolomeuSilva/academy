@@ -3,11 +3,14 @@
 namespace App\Providers;
 
 use App\Filesystem\PublicEndpointS3Adapter;
+use App\Models\CommunityReply;
+use App\Models\CommunityTopic;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Filesystem\Cloud;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Filesystem\AwsS3V3Adapter;
 use Illuminate\Filesystem\FilesystemManager;
 use Illuminate\Http\Request;
@@ -48,6 +51,12 @@ class AppServiceProvider extends ServiceProvider
             ->response(fn () => back()->withErrors([
                 'body' => 'Você enviou muitos comentários em pouco tempo. Aguarde um minuto e tente novamente.',
             ])));
+
+        RateLimiter::for('community', fn (Request $request) => Limit::perMinute(10)
+            ->by((string) $request->user()?->id)
+            ->response(fn () => back()->withErrors([
+                'body' => 'Você publicou muitas mensagens em pouco tempo. Aguarde um minuto e tente novamente.',
+            ])));
     }
 
     /**
@@ -74,6 +83,12 @@ class AppServiceProvider extends ServiceProvider
     protected function configureDefaults(): void
     {
         Date::use(CarbonImmutable::class);
+
+        // Stable names for the reportable column instead of class names.
+        Relation::morphMap([
+            'community_topic' => CommunityTopic::class,
+            'community_reply' => CommunityReply::class,
+        ]);
 
         DB::prohibitDestructiveCommands(
             app()->isProduction(),

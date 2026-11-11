@@ -1,4 +1,5 @@
-import { BookOpen, FolderOpen } from '@lucide/vue';
+import { BookOpen, FolderOpen, MessagesSquare } from '@lucide/vue';
+import { index as community } from '@/routes/community';
 import { index as catalog } from '@/routes/courses';
 import { index as materials } from '@/routes/materials';
 import type { NavItem } from '@/types';
@@ -17,6 +18,11 @@ export function useStudentNav(): NavItem[] {
             title: 'Materiais',
             href: materials().url,
             icon: FolderOpen,
+        },
+        {
+            title: 'Comunidade',
+            href: community().url,
+            icon: MessagesSquare,
         },
     ];
 }
