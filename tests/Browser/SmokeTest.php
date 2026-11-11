@@ -8,8 +8,14 @@ test('public pages render without errors in light and dark mode', function () {
     $pages->assertNoSmoke()->assertNoAccessibilityIssues();
 
     foreach (['/', '/login', '/register', '/forgot-password'] as $url) {
-        visit($url)->inDarkMode()->assertNoSmoke()->assertNoAccessibilityIssues();
+        visitInDarkTheme($url)->assertNoSmoke()->assertNoAccessibilityIssues();
     }
+});
+
+test('the platform starts in the light theme even when the device prefers dark', function () {
+    $page = visit('/login')->inDarkMode();
+
+    expect($page->script("() => document.documentElement.classList.contains('dark')"))->toBeFalse();
 });
 
 test('the settings pages have no accessibility issues in light and dark mode', function () {
@@ -19,7 +25,7 @@ test('the settings pages have no accessibility issues in light and dark mode', f
     visit($urls)->assertNoSmoke()->assertNoAccessibilityIssues();
 
     foreach ($urls as $url) {
-        visit($url)->inDarkMode()->assertNoAccessibilityIssues();
+        visitInDarkTheme($url)->assertNoAccessibilityIssues();
     }
 });
 

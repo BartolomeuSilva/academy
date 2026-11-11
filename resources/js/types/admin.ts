@@ -113,3 +113,16 @@ export type AdminUser = {
     created_at: string | null;
     is_self: boolean;
 };
+
+export type AdminLessonRatings = {
+    average: number | null;
+    count: number;
+    distribution: Record<number, number>;
+    feedback: {
+        id: number;
+        stars: number;
+        feedback: string;
+        author: string;
+        updated_at: string | null;
+    }[];
+};

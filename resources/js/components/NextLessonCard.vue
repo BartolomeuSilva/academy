@@ -13,7 +13,7 @@ defineProps<{
 
 <template>
     <section
-        class="relative overflow-hidden rounded-2xl bg-neutral-900 text-white"
+        class="relative overflow-hidden rounded-2xl bg-hero text-white"
         aria-labelledby="next-lesson-heading"
         data-test="next-lesson"
     >
@@ -73,7 +73,7 @@ defineProps<{
             <div class="flex shrink-0 flex-col gap-2 sm:items-end">
                 <Button
                     size="lg"
-                    class="bg-white text-neutral-900 hover:bg-white/90"
+                    class="bg-brand text-brand-foreground hover:bg-brand/90"
                     as-child
                 >
                     <Link

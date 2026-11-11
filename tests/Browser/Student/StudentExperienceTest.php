@@ -111,12 +111,12 @@ test('student pages have no accessibility issues in light and dark mode', functi
     LessonProgress::factory()->for($student)->for($lesson)->create(['last_position_seconds' => 95]);
     $this->actingAs($student);
 
-    $urls = ['/cursos', "/cursos/{$course->slug}/aulas/{$lesson->slug}"];
+    $urls = ['/cursos', "/cursos/{$course->slug}/aulas/{$lesson->slug}", '/materiais'];
 
     visit($urls)->assertNoSmoke()->assertNoAccessibilityIssues();
 
     foreach ($urls as $url) {
-        visit($url)->inDarkMode()->assertNoAccessibilityIssues();
+        visitInDarkTheme($url)->assertNoAccessibilityIssues();
     }
 });
 
@@ -131,5 +131,59 @@ test('the lesson page works on a phone', function () {
         ->assertSee('Marcar como concluída')
         ->click('@tab-lessons')
         ->assertSee('Nossos valores')
+        ->assertNoSmoke();
+});
+
+test('a student rates a lesson and the team reads the feedback', function () {
+    ['course' => $course] = publishedCourse();
+    $lesson = $course->lessons()->orderBy('position')->first();
+    $this->actingAs(User::factory()->create(['name' => 'Ana Souza']));
+
+    visit("/cursos/{$course->slug}/aulas/{$lesson->slug}")
+        ->assertSee('O que achou desta aula?')
+        ->click('label:has([data-test="rating-star-4"])')
+        ->assertSee('Muito boa')
+        ->fill('@rating-feedback-input', 'Faltou um exemplo prático.')
+        ->click('@send-rating-button')
+        ->assertSee('Obrigado pela avaliação!')
+        ->assertSee('Sua nota:')
+        ->assertSeeIn('@rating-average', '4')
+        ->assertNoJavaScriptErrors();
+
+    $this->actingAs(User::factory()->admin()->create());
+
+    visit("/admin/aulas/{$lesson->id}/editar")
+        ->assertSeeIn('@lesson-ratings-summary', 'Faltou um exemplo prático.')
+        ->assertSeeIn('@lesson-ratings-summary', 'Ana Souza');
+});
+
+test('a student finds a material in the library and opens its lesson', function () {
+    ['course' => $course] = publishedCourse();
+    $this->actingAs(User::factory()->create());
+
+    visit('/cursos')
+        ->click('Materiais')
+        ->assertPathIs('/materiais')
+        ->assertSeeIn('@library-material', 'Manual.pdf')
+        ->assertSeeIn('@library-material', 'Onboarding')
+        ->fill('@material-search', 'planilha')
+        ->assertSee('Nenhum material encontrado')
+        ->fill('@material-search', 'manual')
+        ->assertSee('Manual.pdf')
+        ->click('text=Aula: Conheça a empresa')
+        ->assertPathBeginsWith("/cursos/{$course->slug}/aulas/")
+        ->assertNoJavaScriptErrors();
+});
+
+test('phones navigate with the bottom bar', function () {
+    publishedCourse();
+    $this->actingAs(User::factory()->create());
+
+    visit('/cursos')
+        ->on()->mobile()
+        ->assertVisible('@bottom-nav')
+        ->click('[data-test="bottom-nav"] >> text=Materiais')
+        ->assertPathIs('/materiais')
+        ->assertSee('Manual.pdf')
         ->assertNoSmoke();
 });

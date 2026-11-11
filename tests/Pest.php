@@ -60,3 +60,23 @@ function visibleLesson(Module $module, array $attributes = [], int $durationSeco
 {
     return Lesson::factory()->for($module)->published()->withVideo($durationSeconds)->create($attributes);
 }
+
+/**
+ * Open a page in the dark theme. The platform starts in light; students switch in their settings.
+ *
+ * Transitions are turned off so contrast checks read the final dark colours.
+ */
+function visitInDarkTheme(string $url): mixed
+{
+    $page = visit($url)->inDarkMode();
+    $page->script(<<<'JS'
+        () => {
+            const style = document.createElement('style');
+            style.textContent = '*, *::before, *::after { transition: none !important; }';
+            document.head.append(style);
+            document.documentElement.classList.add('dark');
+        }
+        JS);
+
+    return $page;
+}

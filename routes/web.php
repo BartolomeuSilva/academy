@@ -5,6 +5,8 @@ use App\Http\Controllers\LessonAttachmentController;
 use App\Http\Controllers\LessonCommentController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\LessonProgressController;
+use App\Http\Controllers\LessonRatingController;
+use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\VideoPlaylistController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +27,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('throttle:120,1')
         ->name('lessons.progress.update');
 
+    Route::put('aulas/{lesson}/avaliacao', [LessonRatingController::class, 'update'])
+        ->middleware('throttle:30,1')
+        ->name('lessons.rating.update');
+
     Route::post('aulas/{lesson}/comentarios', [LessonCommentController::class, 'store'])
         ->middleware('throttle:comments')
         ->name('lessons.comments.store');
@@ -33,6 +39,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('aulas/{lesson}/comentarios/{comment}', [LessonCommentController::class, 'destroy'])->name('lessons.comments.destroy');
     });
 
+    Route::get('materiais', [MaterialController::class, 'index'])->name('materials.index');
     Route::get('anexos/{attachment}', [LessonAttachmentController::class, 'show'])->name('attachments.show');
 
     Route::get('videos/{video}/{playlist}.m3u8', [VideoPlaylistController::class, 'show'])

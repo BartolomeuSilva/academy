@@ -33,5 +33,5 @@ test('the users page has no accessibility issues', function () {
     $this->actingAs(User::factory()->admin()->create());
 
     visit('/admin/usuarios')->assertSee('(você)')->assertNoSmoke()->assertNoAccessibilityIssues();
-    visit('/admin/usuarios')->inDarkMode()->assertNoAccessibilityIssues();
+    visitInDarkTheme('/admin/usuarios')->assertNoAccessibilityIssues();
 });

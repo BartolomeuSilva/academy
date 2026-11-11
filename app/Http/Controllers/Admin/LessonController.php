@@ -10,6 +10,7 @@ use App\Http\Requests\Admin\UpdateLessonRequest;
 use App\Jobs\DeleteStoragePaths;
 use App\Models\Lesson;
 use App\Models\LessonAttachment;
+use App\Models\LessonRating;
 use App\Models\Module;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +19,11 @@ use Inertia\Response;
 
 class LessonController extends Controller
 {
+    /**
+     * Written feedback entries shown on the lesson editor.
+     */
+    public const int FEEDBACK_SHOWN = 20;
+
     /**
      * Add a draft lesson to the end of the module.
      */
@@ -77,7 +83,42 @@ class LessonController extends Controller
                 'size' => $attachment->size,
                 'url' => $attachment->temporaryUrl(),
             ]),
+            'ratings' => $this->ratings($lesson),
         ]);
+    }
+
+    /**
+     * Summarise the lesson's ratings with the latest written feedback.
+     *
+     * @return array{average: float|null, count: int, distribution: array<int, int>, feedback: list<array{id: int, stars: int, feedback: string, author: string, updated_at: string|null}>}
+     */
+    private function ratings(Lesson $lesson): array
+    {
+        $counts = $lesson->ratings()->toBase()
+            ->selectRaw('stars, count(*) as total')
+            ->groupBy('stars')
+            ->pluck('total', 'stars');
+        $count = (int) $counts->sum();
+
+        return [
+            'average' => $count > 0 ? round($counts->map(fn ($total, $stars) => $stars * $total)->sum() / $count, 1) : null,
+            'count' => $count,
+            'distribution' => collect(range(5, 1))->mapWithKeys(fn (int $stars) => [$stars => (int) ($counts[$stars] ?? 0)])->all(),
+            'feedback' => array_values($lesson->ratings()
+                ->whereNotNull('feedback')
+                ->with('user:id,name')
+                ->latest('updated_at')
+                ->limit(self::FEEDBACK_SHOWN)
+                ->get()
+                ->map(fn (LessonRating $rating) => [
+                    'id' => $rating->id,
+                    'stars' => $rating->stars,
+                    'feedback' => (string) $rating->feedback,
+                    'author' => $rating->user->name,
+                    'updated_at' => $rating->updated_at?->toIso8601String(),
+                ])
+                ->all()),
+        ];
     }
 
     /**

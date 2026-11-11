@@ -51,6 +51,9 @@
     --color-chart-4: var(--chart-4);
     --color-chart-5: var(--chart-5);
 
+    --color-brand: var(--brand);
+    --color-brand-foreground: var(--brand-foreground);
+
     --color-sidebar: var(--sidebar-background);
     --color-sidebar-foreground: var(--sidebar-foreground);
     --color-sidebar-primary: var(--sidebar-primary);
@@ -90,40 +93,44 @@
 }
 
 :root {
-    --background: hsl(0 0% 100%);
-    --foreground: hsl(0 0% 3.9%);
+    /* Light theme: off-white pages, white cards and a deep green sidebar with lime highlights. */
+    --background: hsl(60 14% 96%);
+    --foreground: hsl(150 25% 10%);
     --card: hsl(0 0% 100%);
-    --card-foreground: hsl(0 0% 3.9%);
+    --card-foreground: hsl(150 25% 10%);
     --popover: hsl(0 0% 100%);
-    --popover-foreground: hsl(0 0% 3.9%);
-    --primary: hsl(0 0% 9%);
-    --primary-foreground: hsl(0 0% 98%);
-    --secondary: hsl(0 0% 92.1%);
-    --secondary-foreground: hsl(0 0% 9%);
-    --muted: hsl(0 0% 96.1%);
-    --muted-foreground: hsl(0 0% 40%);
-    --accent: hsl(0 0% 96.1%);
-    --accent-foreground: hsl(0 0% 9%);
-    --destructive: hsl(0 72.2% 50.6%);
+    --popover-foreground: hsl(150 25% 10%);
+    --primary: hsl(152 62% 26%);
+    --primary-foreground: hsl(0 0% 100%);
+    --secondary: hsl(90 30% 92%);
+    --secondary-foreground: hsl(152 45% 18%);
+    --muted: hsl(70 15% 93%);
+    --muted-foreground: hsl(150 10% 34%);
+    --accent: hsl(90 45% 92%);
+    --accent-foreground: hsl(152 45% 18%);
+    --destructive: hsl(0 72% 44%);
     --destructive-foreground: hsl(0 0% 98%);
-    --border: hsl(0 0% 92.8%);
-    --input: hsl(0 0% 89.8%);
-    --ring: hsl(0 0% 3.9%);
+    --border: hsl(80 14% 87%);
+    --input: hsl(80 12% 82%);
+    --ring: hsl(152 62% 30%);
     --chart-1: hsl(12 76% 61%);
     --chart-2: hsl(173 58% 39%);
     --chart-3: hsl(197 37% 24%);
     --chart-4: hsl(43 74% 66%);
     --chart-5: hsl(27 87% 67%);
     --radius: 0.5rem;
-    --sidebar-background: hsl(0 0% 98%);
-    --sidebar-foreground: hsl(240 5.3% 26.1%);
-    --sidebar-primary: hsl(0 0% 10%);
-    --sidebar-primary-foreground: hsl(0 0% 98%);
-    --sidebar-accent: hsl(0 0% 94%);
-    --sidebar-accent-foreground: hsl(0 0% 30%);
-    --sidebar-border: hsl(0 0% 91%);
-    --sidebar-ring: hsl(217.2 91.2% 59.8%);
-    --sidebar: hsl(0 0% 98%);
+    --brand: hsl(145 65% 48%);
+    --brand-foreground: hsl(155 50% 10%);
+    --hero: linear-gradient(135deg, hsl(152 42% 24%) 0%, hsl(155 50% 11%) 100%);
+    --sidebar-background: hsl(155 45% 11%);
+    --sidebar-foreground: hsl(90 25% 90%);
+    --sidebar-primary: hsl(145 60% 42%);
+    --sidebar-primary-foreground: hsl(0 0% 100%);
+    --sidebar-accent: hsl(75 78% 72%);
+    --sidebar-accent-foreground: hsl(155 45% 11%);
+    --sidebar-border: hsl(155 30% 18%);
+    --sidebar-ring: hsl(75 78% 72%);
+    --sidebar: hsl(155 45% 11%);
 }
 
 .dark {
@@ -160,6 +167,14 @@
     --sidebar-border: hsl(0 0% 15.9%);
     --sidebar-ring: hsl(217.2 91.2% 59.8%);
     --sidebar: hsl(240 5.9% 10%);
+    --brand: hsl(0 0% 100%);
+    --brand-foreground: hsl(0 0% 9%);
+    --hero: linear-gradient(hsl(0 0% 9%), hsl(0 0% 9%));
+}
+
+/* Deep green gradient behind the catalog highlights (flat neutral in dark mode). */
+@utility bg-hero {
+    background-image: var(--hero);
 }
 
 @layer base {

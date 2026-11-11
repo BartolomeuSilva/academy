@@ -89,7 +89,7 @@ const rows = computed(() => {
 
         <section
             v-if="spotlight && featured"
-            class="relative overflow-hidden rounded-2xl bg-neutral-900 text-white"
+            class="relative overflow-hidden rounded-2xl bg-hero text-white"
             aria-labelledby="spotlight-heading"
             data-test="featured-course"
         >
@@ -135,7 +135,7 @@ const rows = computed(() => {
                 <div>
                     <Button
                         size="lg"
-                        class="bg-white text-neutral-900 hover:bg-white/90"
+                        class="bg-brand text-brand-foreground hover:bg-brand/90"
                         as-child
                     >
                         <Link

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, GraduationCap, MessageSquare, Users } from '@lucide/vue';
+import { GraduationCap, MessageSquare, Users } from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -14,6 +14,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { useStudentNav } from '@/composables/useStudentNav';
 import { index as catalog } from '@/routes/courses';
 import { index as adminComments } from '@/routes/admin/comments';
 import { index as adminCourses } from '@/routes/admin/courses';
@@ -22,13 +23,7 @@ import type { NavItem } from '@/types';
 
 const catalogUrl = catalog().url;
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Cursos',
-        href: catalogUrl,
-        icon: BookOpen,
-    },
-];
+const mainNavItems = useStudentNav();
 
 const page = usePage();
 
@@ -56,7 +51,7 @@ const adminNavItems = computed<NavItem[]>(() =>
 </script>
 
 <template>
-    <Sidebar collapsible="icon" variant="inset">
+    <Sidebar collapsible="icon" variant="sidebar">
         <SidebarHeader>
             <SidebarMenu>
                 <SidebarMenuItem>
@@ -70,7 +65,7 @@ const adminNavItems = computed<NavItem[]>(() =>
         </SidebarHeader>
 
         <SidebarContent>
-            <NavMain :items="mainNavItems" />
+            <NavMain :items="mainNavItems" label="Seu espaço" />
             <NavMain
                 v-if="adminNavItems.length"
                 :items="adminNavItems"

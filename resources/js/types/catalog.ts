@@ -103,3 +103,14 @@ export type LessonComments = {
     has_more: boolean;
     total: number;
 };
+
+export type LibraryMaterial = LessonMaterial & {
+    course: { slug: string; title: string };
+    lesson: { slug: string; title: string };
+};
+
+export type LessonRatingSummary = {
+    average: number | null;
+    count: number;
+    mine: { stars: number; feedback: string | null } | null;
+};

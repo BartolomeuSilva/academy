@@ -34,6 +34,7 @@ use Illuminate\Support\Str;
  * @property-read Collection<int, Video> $videos
  * @property-read Collection<int, LessonProgress> $progress
  * @property-read Collection<int, Comment> $comments
+ * @property-read Collection<int, LessonRating> $ratings
  */
 #[Fillable(['title', 'slug', 'description'])]
 class Lesson extends Model
@@ -75,6 +76,14 @@ class Lesson extends Model
     public function attachments(): HasMany
     {
         return $this->hasMany(LessonAttachment::class)->orderBy('position');
+    }
+
+    /**
+     * @return HasMany<LessonRating, $this>
+     */
+    public function ratings(): HasMany
+    {
+        return $this->hasMany(LessonRating::class);
     }
 
     /**

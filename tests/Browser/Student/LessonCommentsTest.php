@@ -48,5 +48,5 @@ test('the moderation page has no accessibility issues', function () {
     $this->actingAs(User::factory()->admin()->create());
 
     visit('/admin/comentarios')->assertSee('Comentários')->assertNoSmoke()->assertNoAccessibilityIssues();
-    visit('/admin/comentarios')->inDarkMode()->assertNoAccessibilityIssues();
+    visitInDarkTheme('/admin/comentarios')->assertNoAccessibilityIssues();
 });

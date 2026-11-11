@@ -4,6 +4,7 @@ import { EyeOff, Eye, Trash2 } from '@lucide/vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import InputError from '@/components/InputError.vue';
 import LessonAttachmentsManager from '@/components/LessonAttachmentsManager.vue';
+import LessonRatingsSummary from '@/components/LessonRatingsSummary.vue';
 import LessonVideoManager from '@/components/LessonVideoManager.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -16,6 +17,7 @@ import { destroy, edit, update } from '@/routes/admin/lessons';
 import { show as showLesson } from '@/routes/lessons';
 import type {
     AdminAttachment,
+    AdminLessonRatings,
     AdminLesson,
     AdminLessonVideo,
     AdminPendingVideo,
@@ -26,6 +28,7 @@ const props = defineProps<{
     video: AdminLessonVideo | null;
     pending_video: AdminPendingVideo | null;
     attachments: AdminAttachment[];
+    ratings: AdminLessonRatings;
 }>();
 
 defineOptions({
@@ -94,6 +97,8 @@ function removeLesson(close: () => void): void {
                     :lesson-id="lesson.id"
                     :attachments="attachments"
                 />
+
+                <LessonRatingsSummary :ratings="ratings" />
             </div>
 
             <aside class="space-y-6">

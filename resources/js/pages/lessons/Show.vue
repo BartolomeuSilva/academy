@@ -14,15 +14,8 @@ import {
 import { computed, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue';
 import CourseOutline from '@/components/CourseOutline.vue';
 import LessonComments from '@/components/LessonComments.vue';
+import LessonRatingCard from '@/components/LessonRatingCard.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
-import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbLink,
-    BreadcrumbList,
-    BreadcrumbPage,
-    BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -35,7 +28,7 @@ import VideoPlayer from '@/components/VideoPlayer.vue';
 import { useLessonProgress } from '@/composables/useLessonProgress';
 import { formatBytes, formatDuration } from '@/lib/format';
 import { edit as editLesson } from '@/routes/admin/lessons';
-import { index } from '@/routes/courses';
+import { index, show as showCourse } from '@/routes/courses';
 import { show } from '@/routes/lessons';
 import type {
     LessonComments as LessonCommentsData,
@@ -43,6 +36,7 @@ import type {
     LessonDetails,
     LessonMaterial,
     LessonProgressState,
+    LessonRatingSummary,
     LessonVideo,
     OutlineLesson,
     OutlineModule,
@@ -56,12 +50,40 @@ const props = defineProps<{
     lesson: LessonDetails;
     video: LessonVideo | null;
     progress: LessonProgressState;
+    rating: LessonRatingSummary;
     attachments: LessonMaterial[];
     modules: OutlineModule[];
     previous_lesson: OutlineLesson | null;
     next_lesson: OutlineLesson | null;
     comments: LessonCommentsData;
 }>();
+
+defineOptions({
+    layout: (props: {
+        course: LessonCourse;
+        lesson: LessonDetails;
+        modules: OutlineModule[];
+    }) => {
+        const number =
+            props.modules
+                .flatMap((module) => module.lessons)
+                .findIndex((item) => item.id === props.lesson.id) + 1;
+
+        return {
+            breadcrumbs: [
+                { title: 'Meus cursos', href: index() },
+                {
+                    title: props.course.title,
+                    href: showCourse(props.course.slug),
+                },
+                {
+                    title: number ? `Aula ${number}` : props.lesson.title,
+                    href: show([props.course.slug, props.lesson.slug]),
+                },
+            ],
+        };
+    },
+});
 
 const lessonProgress = useLessonProgress(
     props.lesson.id,
@@ -101,9 +123,6 @@ const currentModule = computed(() =>
 
 const allLessons = computed(() =>
     props.modules.flatMap((module) => module.lessons),
-);
-const lessonNumber = computed(
-    () => allLessons.value.findIndex((item) => item.id === props.lesson.id) + 1,
 );
 const completedCount = computed(
     () => allLessons.value.filter((lesson) => lesson.completed).length,
@@ -153,68 +172,7 @@ onBeforeUnmount(() => {
 
     <div class="flex min-w-0 flex-1 flex-col">
         <div
-            class="flex flex-wrap items-center gap-x-4 gap-y-2 border-b px-4 py-3 text-sm"
-        >
-            <Breadcrumb class="min-w-0 flex-1" aria-label="Você está em">
-                <BreadcrumbList class="flex-nowrap">
-                    <BreadcrumbItem class="shrink-0">
-                        <BreadcrumbLink as-child>
-                            <Link
-                                :href="index()"
-                                data-test="back-to-catalog-link"
-                            >
-                                Meus cursos
-                            </Link>
-                        </BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator />
-                    <BreadcrumbItem class="min-w-0">
-                        <span class="truncate">{{ course.title }}</span>
-                    </BreadcrumbItem>
-                    <template v-if="lessonNumber">
-                        <BreadcrumbSeparator />
-                        <BreadcrumbItem class="shrink-0">
-                            <BreadcrumbPage
-                                >Aula {{ lessonNumber }}</BreadcrumbPage
-                            >
-                        </BreadcrumbItem>
-                    </template>
-                </BreadcrumbList>
-            </Breadcrumb>
-            <div
-                class="flex items-center gap-2"
-                role="progressbar"
-                :aria-label="`Progresso em ${course.title}`"
-                :aria-valuenow="completedCount"
-                aria-valuemin="0"
-                :aria-valuemax="allLessons.length"
-                :aria-valuetext="`${completedCount} de ${allLessons.length} aulas concluídas`"
-            >
-                <div
-                    v-if="allLessons.length <= 40"
-                    class="flex gap-0.5"
-                    aria-hidden="true"
-                >
-                    <span
-                        v-for="item in allLessons"
-                        :key="item.id"
-                        class="h-1.5 w-2.5 rounded-full"
-                        :class="[
-                            item.completed ? 'bg-primary' : 'bg-primary/15',
-                            item.id === lesson.id
-                                ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
-                                : '',
-                        ]"
-                    />
-                </div>
-                <span class="text-xs text-muted-foreground tabular-nums">
-                    {{ completedCount }}/{{ allLessons.length }}
-                </span>
-            </div>
-        </div>
-
-        <div
-            class="grid flex-1 items-start gap-6 px-4 py-6 lg:grid-cols-[minmax(0,1fr)_22rem]"
+            class="grid flex-1 items-start gap-6 px-4 py-6 xl:grid-cols-[minmax(0,1fr)_22rem]"
         >
             <div class="flex min-w-0 flex-col gap-5">
                 <VideoPlayer
@@ -387,6 +345,8 @@ onBeforeUnmount(() => {
                     </Link>
                 </nav>
 
+                <LessonRatingCard :lesson-id="lesson.id" :rating="rating" />
+
                 <Tabs default-value="sobre" class="gap-4">
                     <TabsList class="w-full justify-start sm:w-fit">
                         <TabsTrigger value="sobre" data-test="tab-about"
@@ -416,7 +376,7 @@ onBeforeUnmount(() => {
                         </TabsTrigger>
                         <TabsTrigger
                             value="aulas"
-                            class="lg:hidden"
+                            class="xl:hidden"
                             data-test="tab-lessons"
                         >
                             Aulas
@@ -522,7 +482,7 @@ onBeforeUnmount(() => {
                         />
                     </TabsContent>
 
-                    <TabsContent value="aulas" class="lg:hidden">
+                    <TabsContent value="aulas" class="xl:hidden">
                         <div class="overflow-hidden rounded-xl border bg-card">
                             <CourseOutline
                                 :course-slug="course.slug"
@@ -535,7 +495,7 @@ onBeforeUnmount(() => {
             </div>
 
             <aside
-                class="hidden overflow-hidden rounded-xl border bg-card text-card-foreground lg:sticky lg:top-4 lg:flex lg:max-h-[calc(100vh-2rem)] lg:flex-col"
+                class="hidden overflow-hidden rounded-xl border bg-card text-card-foreground xl:sticky xl:top-4 xl:flex xl:max-h-[calc(100vh-2rem)] xl:flex-col"
                 aria-label="Aulas do curso"
             >
                 <div

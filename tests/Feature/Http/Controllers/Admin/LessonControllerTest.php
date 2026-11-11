@@ -4,6 +4,7 @@ use App\Enums\PublicationStatus;
 use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\LessonAttachment;
+use App\Models\LessonRating;
 use App\Models\Module;
 use App\Models\User;
 use App\Models\Video;
@@ -56,6 +57,36 @@ test('shows the lesson with its attachments', function () {
         ->where('attachments.0.kind', 'pdf')
         ->has('attachments.0.url'),
     );
+});
+
+test('shows the lesson ratings with the latest written feedback', function () {
+    $lesson = Lesson::factory()->create();
+    LessonRating::factory()->for($lesson)->for(User::factory()->create(['name' => 'Ana']))
+        ->create(['stars' => 2, 'feedback' => 'O áudio está baixo.', 'updated_at' => now()->subDay()]);
+    LessonRating::factory()->for($lesson)->for(User::factory()->create(['name' => 'Bruno']))
+        ->create(['stars' => 5, 'feedback' => 'Muito clara!']);
+    LessonRating::factory()->for($lesson)->create(['stars' => 5, 'feedback' => null]);
+    LessonRating::factory()->create(['stars' => 1]);
+
+    $this->actingAs(User::factory()->admin()->create())
+        ->get(route('admin.lessons.edit', $lesson))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('ratings.average', 4)
+            ->where('ratings.count', 3)
+            ->where('ratings.distribution', ['5' => 2, '4' => 0, '3' => 0, '2' => 1, '1' => 0])
+            ->has('ratings.feedback', 2)
+            ->where('ratings.feedback.0.author', 'Bruno')
+            ->where('ratings.feedback.0.feedback', 'Muito clara!')
+            ->where('ratings.feedback.1.stars', 2));
+});
+
+test('a lesson without ratings has no average in the editor', function () {
+    $this->actingAs(User::factory()->admin()->create())
+        ->get(route('admin.lessons.edit', Lesson::factory()->create()))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('ratings.average', null)
+            ->where('ratings.count', 0)
+            ->where('ratings.feedback', []));
 });
 
 test('updates the lesson details', function () {

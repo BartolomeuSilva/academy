@@ -67,7 +67,7 @@ test('admin pages have no accessibility issues in light and dark mode', function
 
     $pages->assertNoSmoke()->assertNoAccessibilityIssues();
 
-    visit("/admin/cursos/{$lesson->course_id}/editar")->inDarkMode()->assertNoSmoke()->assertNoAccessibilityIssues();
+    visitInDarkTheme("/admin/cursos/{$lesson->course_id}/editar")->assertNoSmoke()->assertNoAccessibilityIssues();
 });
 
 test('students do not see the administration menu', function () {

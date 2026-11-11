@@ -8,6 +8,7 @@ use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\LessonAttachment;
 use App\Models\LessonProgress;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -63,6 +64,7 @@ class LessonController extends Controller
                 'completed' => (bool) $progress?->isCompleted(),
                 'start_at_seconds' => $this->startAt($progress, $lesson->video?->duration_seconds),
             ],
+            'rating' => $this->rating($lesson, $user),
             'attachments' => $lesson->attachments->map(fn (LessonAttachment $attachment) => [
                 'id' => $attachment->id,
                 'kind' => $attachment->kind,
@@ -86,6 +88,23 @@ class LessonController extends Controller
         $requested = $request->integer('comentarios', self::COMMENTS_PER_PAGE);
 
         return min(max($requested, self::COMMENTS_PER_PAGE), 50 * self::COMMENTS_PER_PAGE);
+    }
+
+    /**
+     * Summarise the lesson's ratings and the student's own one.
+     *
+     * @return array{average: float|null, count: int, mine: array{stars: int, feedback: string|null}|null}
+     */
+    private function rating(Lesson $lesson, User $user): array
+    {
+        $summary = $lesson->ratings()->toBase()->selectRaw('count(*) as count, avg(stars) as average')->first();
+        $mine = $lesson->ratings()->whereBelongsTo($user)->first(['stars', 'feedback']);
+
+        return [
+            'average' => $summary->count > 0 ? round((float) $summary->average, 1) : null,
+            'count' => (int) $summary->count,
+            'mine' => $mine ? ['stars' => $mine->stars, 'feedback' => $mine->feedback] : null,
+        ];
     }
 
     private function startAt(?LessonProgress $progress, ?int $durationSeconds): int
