@@ -67,6 +67,8 @@ test('students turn reply e-mails off in their settings', function () {
         ->uncheck('@notify-by-email-checkbox')
         ->click('@save-notification-settings-button')
         ->assertSee('Preferência salva.')
+        // Let the save button finish fading back from its disabled state before checking contrast.
+        ->wait(0.5)
         ->assertNoAccessibilityIssues();
 
     expect($student->refresh()->notify_by_email)->toBeFalse();
