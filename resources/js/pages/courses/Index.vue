@@ -3,14 +3,17 @@ import { Head, Link, usePage } from '@inertiajs/vue3';
 import { CirclePlay, GraduationCap } from '@lucide/vue';
 import { computed } from 'vue';
 import CourseRow from '@/components/CourseRow.vue';
+import NextLessonCard from '@/components/NextLessonCard.vue';
+import ProgressOverview from '@/components/ProgressOverview.vue';
 import { Button } from '@/components/ui/button';
 import { formatTotalDuration } from '@/lib/format';
 import { show } from '@/routes/courses';
-import type { CatalogCourse, FeaturedCourse } from '@/types';
+import type { CatalogCourse, FeaturedCourse, NextLesson } from '@/types';
 
 const UNCATEGORIZED = 'Outros cursos';
 
 const props = defineProps<{
+    next_lesson: NextLesson | null;
     featured: FeaturedCourse | null;
     courses: CatalogCourse[];
 }>();
@@ -24,12 +27,17 @@ const spotlight = computed(() =>
         : undefined,
 );
 
-const inProgress = computed(() =>
-    props.courses.filter(
-        (course) =>
-            course.started &&
-            course.completed_lessons_count < course.lessons_count,
-    ),
+const startedCourses = computed(() =>
+    props.courses
+        .filter((course) => course.started)
+        .sort((a, b) =>
+            (b.last_watched_at ?? '').localeCompare(a.last_watched_at ?? ''),
+        ),
+);
+
+/** The greeting opens the page unless the featured banner does. */
+const showGreeting = computed(
+    () => props.next_lesson !== null || !spotlight.value,
 );
 
 const rows = computed(() => {
@@ -59,6 +67,26 @@ const rows = computed(() => {
     <Head title="Cursos" />
 
     <div class="flex min-w-0 flex-1 flex-col gap-10 px-4 py-6">
+        <header v-if="showGreeting" class="space-y-1">
+            <h1 class="text-2xl font-semibold tracking-tight">
+                Olá, {{ firstName }}!
+            </h1>
+            <p class="text-muted-foreground">
+                {{
+                    next_lesson
+                        ? 'Continue de onde parou ou escolha outro treinamento.'
+                        : 'Escolha um treinamento para começar ou continuar.'
+                }}
+            </p>
+        </header>
+
+        <NextLessonCard v-if="next_lesson" :next-lesson="next_lesson" />
+
+        <ProgressOverview
+            v-if="startedCourses.length"
+            :courses="startedCourses"
+        />
+
         <section
             v-if="spotlight && featured"
             class="relative overflow-hidden rounded-2xl bg-neutral-900 text-white"
@@ -89,12 +117,13 @@ const rows = computed(() => {
                 >
                     {{ spotlight.category }}
                 </p>
-                <h1
+                <component
+                    :is="showGreeting ? 'h2' : 'h1'"
                     id="spotlight-heading"
                     class="text-3xl font-bold tracking-tight sm:text-5xl"
                 >
                     {{ spotlight.title }}
-                </h1>
+                </component>
                 <p class="line-clamp-3 text-white/90">
                     {{ spotlight.summary }}
                 </p>
@@ -125,15 +154,6 @@ const rows = computed(() => {
             </div>
         </section>
 
-        <header v-else class="space-y-1">
-            <h1 class="text-2xl font-semibold tracking-tight">
-                Olá, {{ firstName }}!
-            </h1>
-            <p class="text-muted-foreground">
-                Escolha um treinamento para começar ou continuar.
-            </p>
-        </header>
-
         <div
             v-if="courses.length === 0"
             class="flex flex-col items-center gap-3 rounded-xl border border-dashed p-10 text-center"
@@ -146,12 +166,6 @@ const rows = computed(() => {
         </div>
 
         <template v-else>
-            <CourseRow
-                v-if="inProgress.length"
-                title="Continue assistindo"
-                :courses="inProgress"
-                data-test="continue-row"
-            />
             <CourseRow
                 v-for="row in rows"
                 :key="row.title"

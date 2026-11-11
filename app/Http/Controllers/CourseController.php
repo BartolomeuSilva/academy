@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\BuildCourseOutline;
 use App\Models\Course;
 use App\Models\Lesson;
+use App\Models\LessonProgress;
 use App\Models\Video;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -12,12 +13,15 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * @phpstan-import-type Outline from BuildCourseOutline
+ */
 class CourseController extends Controller
 {
     /**
      * List the published courses with the student's progress.
      */
-    public function index(Request $request): Response
+    public function index(Request $request, BuildCourseOutline $buildCourseOutline): Response
     {
         $user = $request->user();
 
@@ -39,12 +43,24 @@ class CourseController extends Controller
                 ->whereColumn('lessons.course_id', 'courses.id')
                 ->where('lessons.status', 'published'),
             ])
+            ->addSelect(['last_watched_at' => LessonProgress::query()
+                ->selectRaw('max(lesson_progress.updated_at)')
+                ->join('lessons', 'lessons.id', '=', 'lesson_progress.lesson_id')
+                ->whereColumn('lessons.course_id', 'courses.id')
+                ->whereBelongsTo($user),
+            ])
             ->orderBy('position')
             ->get();
 
         $featured = $courses->first(fn (Course $course) => $course->featured_at !== null && $course->banner_path !== null);
 
+        $current = $courses
+            ->filter(fn (Course $course) => $course->started && $course->completed_lessons_count < $course->lessons_count)
+            ->sortByDesc('last_watched_at')
+            ->first();
+
         return Inertia::render('courses/Index', [
+            'next_lesson' => $current ? $this->nextLesson($current, $buildCourseOutline->handle($current, $user)) : null,
             'featured' => $featured ? [
                 'id' => $featured->id,
                 'banner_url' => $featured->bannerUrl(),
@@ -61,8 +77,38 @@ class CourseController extends Controller
                 'completed_lessons_count' => $course->completed_lessons_count,
                 'duration_seconds' => (int) $course->duration_seconds,
                 'started' => (bool) $course->started,
+                'last_watched_at' => $course->last_watched_at,
             ]),
         ]);
+    }
+
+    /**
+     * Describe the lesson the student should watch next in the course they watched last.
+     *
+     * @param  Outline  $outline
+     * @return array{course: array{slug: string, title: string}, lesson: array{slug: string, title: string, number: int, duration_seconds: int|null}, started: bool, remaining_lessons: int, remaining_seconds: int}|null
+     */
+    private function nextLesson(Course $course, array $outline): ?array
+    {
+        if ($outline['resume'] === null) {
+            return null;
+        }
+
+        $lesson = $outline['resume']['lesson'];
+        $remaining = array_filter($outline['lessons'], fn (array $item) => ! $item['completed']);
+
+        return [
+            'course' => ['slug' => $course->slug, 'title' => $course->title],
+            'lesson' => [
+                'slug' => $lesson['slug'],
+                'title' => $lesson['title'],
+                'number' => array_search($lesson['id'], array_column($outline['lessons'], 'id'), true) + 1,
+                'duration_seconds' => $lesson['duration_seconds'],
+            ],
+            'started' => $outline['resume']['started'],
+            'remaining_lessons' => count($remaining),
+            'remaining_seconds' => array_sum(array_column($remaining, 'duration_seconds')),
+        ];
     }
 
     /**

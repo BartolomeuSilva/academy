@@ -2,6 +2,7 @@
 
 use App\Models\Course;
 use App\Models\LessonAttachment;
+use App\Models\LessonProgress;
 use App\Models\Module;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
@@ -36,10 +37,12 @@ test('a student goes from the catalog to a lesson and completes it', function ()
     visit('/cursos')
         ->assertSee('Onboarding')
         ->assertSee('Primeiros passos na empresa.')
-        ->assertDontSee('Continue assistindo')
+        ->assertDontSee('Sua próxima aula')
         ->click('@catalog-course')
         ->assertPathIs("/cursos/{$course->slug}/aulas/{$first->slug}")
         ->assertSee('Conheça a empresa')
+        ->assertSee('Aula 1')
+        ->assertDontSee('Retomando de')
         ->assertSee('0 de 2 aulas concluídas')
         ->click('@tab-materials')
         ->assertSee('Manual.pdf')
@@ -55,10 +58,27 @@ test('a student goes from the catalog to a lesson and completes it', function ()
     $second = $course->lessons()->where('title', 'Nossos valores')->sole();
 
     visit('/cursos')
-        ->assertSee('Continue assistindo')
+        ->assertSeeIn('@next-lesson', 'Nossos valores')
+        ->assertSeeIn('@next-lesson', 'Falta 1 aula neste curso')
+        ->assertSeeIn('@progress-course', '1 de 2 aulas')
         ->assertSee('50% concluído')
-        ->click('[data-test="continue-row"] [data-test="catalog-course"]')
-        ->assertPathIs("/cursos/{$course->slug}/aulas/{$second->slug}");
+        ->click('@next-lesson-link')
+        ->assertPathIs("/cursos/{$course->slug}/aulas/{$second->slug}")
+        ->assertSee('Aula 2');
+});
+
+test('a lesson resumes where the student stopped and can start over', function () {
+    ['course' => $course] = publishedCourse();
+    $lesson = $course->lessons()->orderBy('position')->first();
+    $student = User::factory()->create();
+    LessonProgress::factory()->for($student)->for($lesson)->create(['last_position_seconds' => 95]);
+    $this->actingAs($student);
+
+    visit("/cursos/{$course->slug}/aulas/{$lesson->slug}")
+        ->assertSeeIn('@resume-notice', 'Retomando de 1:35')
+        ->click('@restart-lesson-button')
+        ->assertMissing('@resume-notice')
+        ->assertNoJavaScriptErrors();
 });
 
 test('the catalog shows the featured course and one row per category', function () {
@@ -87,7 +107,9 @@ test('the catalog shows the featured course and one row per category', function 
 test('student pages have no accessibility issues in light and dark mode', function () {
     ['course' => $course] = publishedCourse();
     $lesson = $course->lessons()->orderBy('position')->first();
-    $this->actingAs(User::factory()->create());
+    $student = User::factory()->create();
+    LessonProgress::factory()->for($student)->for($lesson)->create(['last_position_seconds' => 95]);
+    $this->actingAs($student);
 
     $urls = ['/cursos', "/cursos/{$course->slug}/aulas/{$lesson->slug}"];
 

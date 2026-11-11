@@ -7,12 +7,10 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import ProgressRing from '@/components/ProgressRing.vue';
 import { formatDuration, formatTotalDuration } from '@/lib/format';
 import { show as showLesson } from '@/routes/lessons';
 import type { OutlineModule } from '@/types';
-
-const RING_RADIUS = 15;
-const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
 
 const props = defineProps<{
     courseSlug: string;
@@ -60,40 +58,7 @@ function moduleDuration(module: OutlineModule): string {
             <CollapsibleTrigger
                 class="group flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-accent/60 focus-visible:bg-accent focus-visible:outline-none"
             >
-                <div class="relative size-10 shrink-0">
-                    <svg
-                        viewBox="0 0 36 36"
-                        class="size-full -rotate-90"
-                        aria-hidden="true"
-                    >
-                        <circle
-                            cx="18"
-                            cy="18"
-                            :r="RING_RADIUS"
-                            fill="none"
-                            stroke-width="3"
-                            class="stroke-primary/15"
-                        />
-                        <circle
-                            cx="18"
-                            cy="18"
-                            :r="RING_RADIUS"
-                            fill="none"
-                            stroke-width="3"
-                            stroke-linecap="round"
-                            class="stroke-primary transition-[stroke-dashoffset]"
-                            :stroke-dasharray="RING_LENGTH"
-                            :stroke-dashoffset="
-                                RING_LENGTH * (1 - completion(module) / 100)
-                            "
-                        />
-                    </svg>
-                    <span
-                        class="absolute inset-0 flex items-center justify-center text-[10px] font-semibold tabular-nums"
-                    >
-                        {{ completion(module) }}%
-                    </span>
-                </div>
+                <ProgressRing :percentage="completion(module)" />
                 <div class="min-w-0 flex-1">
                     <p
                         class="text-[11px] font-medium tracking-wider text-muted-foreground uppercase"

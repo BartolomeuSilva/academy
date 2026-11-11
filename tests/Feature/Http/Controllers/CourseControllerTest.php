@@ -90,6 +90,50 @@ test('a course counts as started once the student watched any visible lesson', f
         ->assertInertia(fn (Assert $page) => $page->where('courses.0.started', false));
 });
 
+test('the catalog suggests the next lesson of the unfinished course watched last', function () {
+    $student = User::factory()->create();
+    $older = Course::factory()->published()->create(['position' => 1]);
+    LessonProgress::factory()->for($student)->for(visibleLesson(Module::factory()->for($older)->create()))
+        ->create(['updated_at' => now()->subDay()]);
+
+    $course = Course::factory()->published()->create(['title' => 'Vendas consultivas', 'position' => 2]);
+    $module = Module::factory()->for($course)->create();
+    $watched = visibleLesson($module, ['position' => 1], durationSeconds: 300);
+    $next = visibleLesson($module, ['position' => 2, 'title' => 'Objeções'], durationSeconds: 420);
+    visibleLesson($module, ['position' => 3], durationSeconds: 600);
+    LessonProgress::factory()->completed()->for($student)->for($watched)->create(['updated_at' => now()->subMinute()]);
+
+    $finished = Course::factory()->published()->create(['position' => 3]);
+    LessonProgress::factory()->completed()->for($student)->for(visibleLesson(Module::factory()->for($finished)->create()))->create();
+
+    $this->actingAs($student)
+        ->get(route('courses.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('next_lesson.course', ['slug' => $course->slug, 'title' => 'Vendas consultivas'])
+            ->where('next_lesson.lesson', ['slug' => $next->slug, 'title' => 'Objeções', 'number' => 2, 'duration_seconds' => 420])
+            ->where('next_lesson.started', true)
+            ->where('next_lesson.remaining_lessons', 2)
+            ->where('next_lesson.remaining_seconds', 1020)
+            ->where('courses.1.last_watched_at', fn (?string $watchedAt) => $watchedAt !== null)
+            ->where('courses.2.last_watched_at', fn (?string $watchedAt) => $watchedAt !== null));
+});
+
+test('the catalog suggests no lesson before the student starts a course or after finishing them all', function () {
+    $student = User::factory()->create();
+    $course = Course::factory()->published()->create();
+    $lesson = visibleLesson(Module::factory()->for($course)->create());
+
+    $this->actingAs($student)
+        ->get(route('courses.index'))
+        ->assertInertia(fn (Assert $page) => $page->where('next_lesson', null)->where('courses.0.last_watched_at', null));
+
+    LessonProgress::factory()->completed()->for($student)->for($lesson)->create();
+
+    $this->actingAs($student)
+        ->get(route('courses.index'))
+        ->assertInertia(fn (Assert $page) => $page->where('next_lesson', null));
+});
+
 test('students get not found for courses outside the catalog', function () {
     $draft = Course::factory()->create();
     visibleLesson(Module::factory()->for($draft)->create());

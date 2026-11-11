@@ -1,21 +1,28 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import {
-    ArrowLeft,
     ChevronLeft,
     ChevronRight,
     CircleCheck,
     Circle,
     Download,
-    FileText,
     Paperclip,
     Pencil,
+    RotateCcw,
     VideoOff,
 } from '@lucide/vue';
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue';
 import CourseOutline from '@/components/CourseOutline.vue';
 import LessonComments from '@/components/LessonComments.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
+import {
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -26,7 +33,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import VideoPlayer from '@/components/VideoPlayer.vue';
 import { useLessonProgress } from '@/composables/useLessonProgress';
-import { formatBytes } from '@/lib/format';
+import { formatBytes, formatDuration } from '@/lib/format';
 import { edit as editLesson } from '@/routes/admin/lessons';
 import { index } from '@/routes/courses';
 import { show } from '@/routes/lessons';
@@ -42,6 +49,7 @@ import type {
 } from '@/types';
 
 const AUTOPLAY_SECONDS = 5;
+const RESUME_NOTICE_SECONDS = 8;
 
 const props = defineProps<{
     course: LessonCourse;
@@ -65,6 +73,24 @@ watch(completed, () => router.reload({ only: ['modules'] }));
 
 const viewedImage = ref<LessonMaterial | null>(null);
 
+const player = useTemplateRef('player');
+const showResumeNotice = ref(props.progress.start_at_seconds > 0);
+let resumeNoticeTimer: ReturnType<typeof setTimeout> | undefined;
+
+function hideResumeNoticeSoon(): void {
+    if (showResumeNotice.value && resumeNoticeTimer === undefined) {
+        resumeNoticeTimer = setTimeout(
+            () => (showResumeNotice.value = false),
+            RESUME_NOTICE_SECONDS * 1000,
+        );
+    }
+}
+
+function restartLesson(): void {
+    showResumeNotice.value = false;
+    player.value?.restart();
+}
+
 const isAdmin = computed(() => usePage().props.auth.user?.role === 'admin');
 
 const currentModule = computed(() =>
@@ -75,6 +101,9 @@ const currentModule = computed(() =>
 
 const allLessons = computed(() =>
     props.modules.flatMap((module) => module.lessons),
+);
+const lessonNumber = computed(
+    () => allLessons.value.findIndex((item) => item.id === props.lesson.id) + 1,
 );
 const completedCount = computed(
     () => allLessons.value.filter((lesson) => lesson.completed).length,
@@ -113,7 +142,10 @@ function onEnded(): void {
     }, 1000);
 }
 
-onBeforeUnmount(stopCountdown);
+onBeforeUnmount(() => {
+    stopCountdown();
+    clearTimeout(resumeNoticeTimer);
+});
 </script>
 
 <template>
@@ -123,22 +155,32 @@ onBeforeUnmount(stopCountdown);
         <div
             class="flex flex-wrap items-center gap-x-4 gap-y-2 border-b px-4 py-3 text-sm"
         >
-            <Link
-                :href="index()"
-                class="flex items-center gap-1 font-medium text-muted-foreground hover:text-foreground"
-                data-test="back-to-catalog-link"
-            >
-                <ArrowLeft class="size-4" /> Meus cursos
-            </Link>
-            <span
-                class="hidden h-4 w-px bg-border sm:block"
-                aria-hidden="true"
-            />
-            <span
-                class="min-w-0 flex-1 truncate text-xs font-semibold tracking-wider text-muted-foreground uppercase"
-            >
-                {{ course.title }}
-            </span>
+            <Breadcrumb class="min-w-0 flex-1" aria-label="Você está em">
+                <BreadcrumbList class="flex-nowrap">
+                    <BreadcrumbItem class="shrink-0">
+                        <BreadcrumbLink as-child>
+                            <Link
+                                :href="index()"
+                                data-test="back-to-catalog-link"
+                            >
+                                Meus cursos
+                            </Link>
+                        </BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem class="min-w-0">
+                        <span class="truncate">{{ course.title }}</span>
+                    </BreadcrumbItem>
+                    <template v-if="lessonNumber">
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem class="shrink-0">
+                            <BreadcrumbPage
+                                >Aula {{ lessonNumber }}</BreadcrumbPage
+                            >
+                        </BreadcrumbItem>
+                    </template>
+                </BreadcrumbList>
+            </Breadcrumb>
             <div
                 class="flex items-center gap-2"
                 role="progressbar"
@@ -177,16 +219,37 @@ onBeforeUnmount(stopCountdown);
             <div class="flex min-w-0 flex-col gap-5">
                 <VideoPlayer
                     v-if="video"
+                    ref="player"
                     :key="lesson.id"
                     :src="video.playlist_url"
                     :poster="video.poster_url"
                     :start-at="progress.start_at_seconds"
                     @timeupdate="lessonProgress.onTimeUpdate"
                     @pause="lessonProgress.onPause"
-                    @play="stopCountdown"
+                    @play="
+                        stopCountdown();
+                        hideResumeNoticeSoon();
+                    "
                     @ended="onEnded"
                 >
                     <template #overlay>
+                        <div
+                            v-if="showResumeNotice"
+                            class="absolute top-3 left-3 flex items-center gap-1 rounded-full bg-black/75 py-1 pr-1 pl-3 text-xs text-white backdrop-blur"
+                            data-test="resume-notice"
+                        >
+                            Retomando de
+                            {{ formatDuration(progress.start_at_seconds) }}
+                            <button
+                                type="button"
+                                class="flex items-center gap-1 rounded-full px-2 py-1 font-semibold text-white hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
+                                data-test="restart-lesson-button"
+                                @click="restartLesson"
+                            >
+                                <RotateCcw class="size-3" aria-hidden="true" />
+                                Voltar ao início
+                            </button>
+                        </div>
                         <div
                             v-if="countdown !== null && next_lesson"
                             class="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/80 p-4 text-center text-white"
@@ -420,13 +483,10 @@ onBeforeUnmount(stopCountdown);
                                     :href="attachment.url"
                                     target="_blank"
                                     rel="noopener"
-                                    class="flex size-12 shrink-0 items-center justify-center rounded-md bg-muted"
+                                    class="flex size-12 shrink-0 items-center justify-center rounded-md bg-red-50 text-xs font-bold tracking-wide text-red-700 ring-1 ring-red-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none dark:bg-red-950/50 dark:text-red-300 dark:ring-red-900"
                                     :aria-label="`Abrir ${attachment.original_name}`"
                                 >
-                                    <FileText
-                                        class="size-5"
-                                        aria-hidden="true"
-                                    />
+                                    PDF
                                 </a>
 
                                 <div class="min-w-0 flex-1">
@@ -436,7 +496,7 @@ onBeforeUnmount(stopCountdown);
                                     <p class="text-xs text-muted-foreground">
                                         {{
                                             attachment.kind === 'pdf'
-                                                ? 'PDF'
+                                                ? 'Documento PDF'
                                                 : 'Imagem'
                                         }}
                                         · {{ formatBytes(attachment.size) }}

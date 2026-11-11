@@ -37,6 +37,7 @@ use Illuminate\Support\Str;
  * @property-read int|null $completed_lessons_count Loaded by the catalog query.
  * @property-read int|string|null $duration_seconds Loaded by the catalog query.
  * @property-read bool|null $started Loaded by the catalog query.
+ * @property-read string|null $last_watched_at Loaded by the catalog query: the student's latest progress update in the course.
  */
 #[Fillable(['title', 'slug', 'summary', 'description', 'category'])]
 class Course extends Model

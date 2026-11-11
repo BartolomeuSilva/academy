@@ -82,6 +82,19 @@ function changeLevel(event: Event): void {
     }
 }
 
+/**
+ * Rewind to the beginning and keep playing.
+ */
+function restart(): void {
+    if (video.value) {
+        video.value.currentTime = 0;
+        // The browser may refuse to play (e.g. media not loaded yet); the student can press play.
+        video.value.play().catch(() => {});
+    }
+}
+
+defineExpose({ restart });
+
 onMounted(load);
 watch(() => props.src, load);
 onBeforeUnmount(() => hls?.destroy());

@@ -11,6 +11,20 @@ export type CatalogCourse = {
     completed_lessons_count: number;
     duration_seconds: number;
     started: boolean;
+    last_watched_at: string | null;
+};
+
+export type NextLesson = {
+    course: { slug: string; title: string };
+    lesson: {
+        slug: string;
+        title: string;
+        number: number;
+        duration_seconds: number | null;
+    };
+    started: boolean;
+    remaining_lessons: number;
+    remaining_seconds: number;
 };
 
 export type FeaturedCourse = {
