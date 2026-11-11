@@ -27,6 +27,8 @@ test('a student comments, replies, edits and deletes on a lesson', function () {
         ->click('@send-comment-button')
         ->assertSee('Gostei muito da aula!')
         ->assertSee('Comentários (3)')
+        // Let the send button finish fading back from its disabled state before checking contrast.
+        ->wait(0.5)
         ->assertNoAccessibilityIssues()
         ->assertNoJavaScriptErrors();
 
