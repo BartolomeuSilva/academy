@@ -100,7 +100,8 @@ test('the lesson menu lists only the modules and lessons a student may watch', f
             ->where('modules.0.title', 'Introdução')
             ->has('modules.0.lessons', 1)
             ->where('modules.0.lessons.0.title', 'Boas-vindas')
-            ->where('modules.0.lessons.0.duration_seconds', 600));
+            ->where('modules.0.lessons.0.duration_seconds', 600)
+            ->where('modules.0.lessons.0.thumbnail_url', fn (?string $url) => str_contains((string) $url, 'poster.jpg')));
 });
 
 test('the course description is rendered without raw html', function () {

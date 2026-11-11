@@ -6,8 +6,10 @@ use App\Actions\BuildCourseOutline;
 use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\LessonProgress;
+use App\Models\User;
 use App\Models\Video;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -24,8 +26,44 @@ class CourseController extends Controller
     public function index(Request $request, BuildCourseOutline $buildCourseOutline): Response
     {
         $user = $request->user();
+        $courses = $this->catalog($user);
 
-        $courses = Course::query()
+        $featured = $courses->first(fn (Course $course) => $course->featured_at !== null && $course->banner_path !== null);
+
+        $current = $courses
+            ->filter(fn (Course $course) => $course->started && $course->completed_lessons_count < $course->lessons_count)
+            ->sortByDesc('last_watched_at')
+            ->first();
+
+        return Inertia::render('courses/Index', [
+            'next_lesson' => $current ? $this->nextLesson($current, $buildCourseOutline->handle($current, $user)) : null,
+            'featured' => $featured ? [
+                'id' => $featured->id,
+                'banner_url' => $featured->bannerUrl(),
+                'banner_mobile_url' => $featured->bannerMobileUrl(),
+            ] : null,
+            'courses' => $courses->map($this->catalogCourse(...)),
+        ]);
+    }
+
+    /**
+     * Every course of the student's library, side by side.
+     */
+    public function library(Request $request): Response
+    {
+        return Inertia::render('courses/Library', [
+            'courses' => $this->catalog($request->user())->map($this->catalogCourse(...)),
+        ]);
+    }
+
+    /**
+     * Published courses that have a visible lesson, with the student's progress.
+     *
+     * @return Collection<int, Course>
+     */
+    private function catalog(User $user): Collection
+    {
+        return Course::query()
             ->visible()
             ->withCount([
                 'lessons' => $this->visibleLessons(...),
@@ -51,35 +89,26 @@ class CourseController extends Controller
             ])
             ->orderBy('position')
             ->get();
+    }
 
-        $featured = $courses->first(fn (Course $course) => $course->featured_at !== null && $course->banner_path !== null);
-
-        $current = $courses
-            ->filter(fn (Course $course) => $course->started && $course->completed_lessons_count < $course->lessons_count)
-            ->sortByDesc('last_watched_at')
-            ->first();
-
-        return Inertia::render('courses/Index', [
-            'next_lesson' => $current ? $this->nextLesson($current, $buildCourseOutline->handle($current, $user)) : null,
-            'featured' => $featured ? [
-                'id' => $featured->id,
-                'banner_url' => $featured->bannerUrl(),
-                'banner_mobile_url' => $featured->bannerMobileUrl(),
-            ] : null,
-            'courses' => $courses->map(fn (Course $course) => [
-                'id' => $course->id,
-                'slug' => $course->slug,
-                'title' => $course->title,
-                'summary' => $course->summary,
-                'category' => $course->category,
-                'cover_url' => $course->coverUrl(),
-                'lessons_count' => $course->lessons_count,
-                'completed_lessons_count' => $course->completed_lessons_count,
-                'duration_seconds' => (int) $course->duration_seconds,
-                'started' => (bool) $course->started,
-                'last_watched_at' => $course->last_watched_at,
-            ]),
-        ]);
+    /**
+     * @return array{id: int, slug: string, title: string, summary: string, category: string|null, cover_url: string|null, lessons_count: int, completed_lessons_count: int, duration_seconds: int, started: bool, last_watched_at: string|null}
+     */
+    private function catalogCourse(Course $course): array
+    {
+        return [
+            'id' => $course->id,
+            'slug' => $course->slug,
+            'title' => $course->title,
+            'summary' => $course->summary,
+            'category' => $course->category,
+            'cover_url' => $course->coverUrl(),
+            'lessons_count' => (int) $course->lessons_count,
+            'completed_lessons_count' => (int) $course->completed_lessons_count,
+            'duration_seconds' => (int) $course->duration_seconds,
+            'started' => (bool) $course->started,
+            'last_watched_at' => $course->last_watched_at,
+        ];
     }
 
     /**

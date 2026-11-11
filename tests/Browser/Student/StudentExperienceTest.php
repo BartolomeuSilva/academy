@@ -38,7 +38,7 @@ test('a student goes from the catalog to a lesson and completes it', function ()
         ->assertSee('Onboarding')
         ->assertSee('Primeiros passos na empresa.')
         ->assertDontSee('Sua próxima aula')
-        ->click('@catalog-course')
+        ->click('@course-card-action')
         ->assertPathIs("/cursos/{$course->slug}/aulas/{$first->slug}")
         ->assertSee('Conheça a empresa')
         ->assertSee('Aula 1')
@@ -61,7 +61,7 @@ test('a student goes from the catalog to a lesson and completes it', function ()
         ->assertSeeIn('@next-lesson', 'Nossos valores')
         ->assertSeeIn('@next-lesson', 'Falta 1 aula neste curso')
         ->assertSeeIn('@progress-course', '1 de 2 aulas')
-        ->assertSee('50% concluído')
+        ->assertSeeIn('@progress-course', '50%')
         ->click('@next-lesson-link')
         ->assertPathIs("/cursos/{$course->slug}/aulas/{$second->slug}")
         ->assertSee('Aula 2');
@@ -81,26 +81,44 @@ test('a lesson resumes where the student stopped and can start over', function (
         ->assertNoJavaScriptErrors();
 });
 
-test('the catalog shows the featured course and one row per category', function () {
+test('the home page highlights the featured course and previews the courses', function () {
+    ['course' => $course] = publishedCourse();
+    $course->forceFill(['banner_path' => 'banners/onboarding.jpg', 'featured_at' => now()])->save();
+    $this->actingAs(User::factory()->create());
+
+    visit('/cursos')
+        ->assertSeeIn('@featured-course', 'Onboarding')
+        ->assertSeeIn('@featured-course', 'Começar curso')
+        ->assertSeeIn('@catalog-course', 'Começar curso')
+        ->click('@all-courses-link')
+        ->assertPathIs('/meus-cursos')
+        ->assertNoJavaScriptErrors();
+});
+
+test('my courses shows every course side by side and filters them by category', function () {
     ['course' => $course] = publishedCourse();
     $course->update(['category' => 'Integração']);
-    $course->forceFill(['banner_path' => 'banners/onboarding.jpg', 'featured_at' => now()])->save();
     $other = Course::factory()->published()->create(['title' => 'Vendas consultivas', 'category' => 'Vendas']);
     visibleLesson(Module::factory()->for($other)->create());
     $uncategorized = Course::factory()->published()->create(['title' => 'Excel básico']);
     visibleLesson(Module::factory()->for($uncategorized)->create());
     $this->actingAs(User::factory()->create());
 
-    visit('/cursos')
-        ->assertSeeIn('@featured-course', 'Onboarding')
-        ->assertSeeIn('@featured-course', 'Começar curso')
-        ->assertSee('Integração')
-        ->assertSee('Vendas')
-        ->assertSee('Outros cursos')
+    $page = visit('/meus-cursos')
+        ->assertSee('Meus cursos')
+        ->assertNoAccessibilityIssues();
+
+    expect($page->script("() => document.querySelectorAll('[data-test=\"catalog-course\"]').length"))->toBe(3)
+        ->and($page->script("() => new Set([...document.querySelectorAll('[data-test=\"catalog-course\"]')].map((card) => Math.round(card.getBoundingClientRect().top))).size"))->toBe(1);
+
+    $page->click('[data-test="category-filter"]:has-text("Vendas")')
+        ->assertSee('Vendas consultivas')
+        ->assertDontSee('Excel básico')
+        ->click('[data-test="category-filter"]:has-text("Outros cursos")')
         ->assertSee('Excel básico')
-        ->assertNoAccessibilityIssues()
-        ->click('@featured-course-link')
-        ->assertPathBeginsWith("/cursos/{$course->slug}/aulas/")
+        ->assertDontSee('Vendas consultivas')
+        ->click('@course-card-action')
+        ->assertPathBeginsWith("/cursos/{$uncategorized->slug}/aulas/")
         ->assertNoJavaScriptErrors();
 });
 
@@ -111,7 +129,7 @@ test('student pages have no accessibility issues in light and dark mode', functi
     LessonProgress::factory()->for($student)->for($lesson)->create(['last_position_seconds' => 95]);
     $this->actingAs($student);
 
-    $urls = ['/cursos', "/cursos/{$course->slug}/aulas/{$lesson->slug}", '/materiais'];
+    $urls = ['/cursos', '/meus-cursos', "/cursos/{$course->slug}/aulas/{$lesson->slug}", '/materiais'];
 
     visit($urls)->assertNoSmoke()->assertNoAccessibilityIssues();
 
@@ -182,8 +200,8 @@ test('phones navigate with the bottom bar', function () {
     visit('/cursos')
         ->on()->mobile()
         ->assertVisible('@bottom-nav')
-        ->click('[data-test="bottom-nav"] >> text=Materiais')
-        ->assertPathIs('/materiais')
-        ->assertSee('Manual.pdf')
+        ->click('[data-test="bottom-nav"] >> text=Cursos')
+        ->assertPathIs('/meus-cursos')
+        ->assertSee('Onboarding')
         ->assertNoSmoke();
 });

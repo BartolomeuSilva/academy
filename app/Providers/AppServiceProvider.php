@@ -3,8 +3,7 @@
 namespace App\Providers;
 
 use App\Filesystem\PublicEndpointS3Adapter;
-use App\Models\CommunityReply;
-use App\Models\CommunityTopic;
+use App\Models\CommunityMessage;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Filesystem\Cloud;
@@ -55,7 +54,7 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('community', fn (Request $request) => Limit::perMinute(10)
             ->by((string) $request->user()?->id)
             ->response(fn () => back()->withErrors([
-                'body' => 'Você publicou muitas mensagens em pouco tempo. Aguarde um minuto e tente novamente.',
+                'body' => 'Você enviou muitas mensagens em pouco tempo. Aguarde um minuto e tente novamente.',
             ])));
     }
 
@@ -86,8 +85,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Stable names for the reportable column instead of class names.
         Relation::morphMap([
-            'community_topic' => CommunityTopic::class,
-            'community_reply' => CommunityReply::class,
+            'community_message' => CommunityMessage::class,
         ]);
 
         DB::prohibitDestructiveCommands(

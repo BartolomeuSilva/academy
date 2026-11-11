@@ -3,9 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\CommunityReply;
 use App\Models\CommunityReport;
-use App\Models\CommunityTopic;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,18 +14,18 @@ use Inertia\Response;
 class CommunityReportController extends Controller
 {
     /**
-     * List the open reports, oldest first, with the reported content.
+     * List the open reports, oldest first, with the reported message.
      */
     public function index(): Response
     {
         $reports = CommunityReport::query()
             ->whereNull('resolved_at')
-            ->with(['user:id,name', 'reportable.user:id,name'])
+            ->with(['user:id,name', 'reportable.user:id,name', 'reportable.space:id,name,slug'])
             ->oldest('id')
             ->paginate(20)
             ->through(function (CommunityReport $report) {
                 $content = $report->reportable;
-                $topic = $content instanceof CommunityReply ? $content->topic()->withTrashed()->first() : $content;
+                $channel = $content?->space;
 
                 return [
                     'id' => $report->id,
@@ -35,11 +33,11 @@ class CommunityReportController extends Controller
                     'reporter' => $report->user->name,
                     'created_at' => $report->created_at?->toIso8601String(),
                     'content' => $content ? [
-                        'kind' => $content instanceof CommunityTopic ? 'topic' : 'reply',
+                        'id' => $content->id,
                         'body' => $content->body,
                         'author' => $content->user->name,
                         'deleted' => $content->trashed(),
-                        'topic' => $topic ? ['id' => $topic->id, 'title' => $topic->title] : null,
+                        'channel' => $channel ? ['name' => $channel->name, 'slug' => $channel->slug] : null,
                     ] : null,
                 ];
             });
@@ -50,7 +48,7 @@ class CommunityReportController extends Controller
     }
 
     /**
-     * Close a report without removing the content.
+     * Close a report without removing the message.
      */
     public function update(Request $request, CommunityReport $report): RedirectResponse
     {
@@ -62,28 +60,19 @@ class CommunityReportController extends Controller
     }
 
     /**
-     * Remove the reported content and close every open report about it.
+     * Remove the reported message and close every open report about it.
      */
     public function destroy(Request $request, CommunityReport $report): RedirectResponse
     {
         DB::transaction(function () use ($request, $report) {
-            $content = $report->reportable;
-
-            if ($content instanceof CommunityReply) {
-                CommunityTopic::withTrashed()
-                    ->whereKey($content->topic_id)
-                    ->where('solution_reply_id', $content->id)
-                    ->update(['solution_reply_id' => null]);
-            }
-
-            $content?->delete();
+            $report->reportable?->delete();
 
             $this->resolve(CommunityReport::query()
                 ->where('reportable_type', $report->reportable_type)
                 ->where('reportable_id', $report->reportable_id), $request);
         });
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Conteúdo removido.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Mensagem removida.']);
 
         return back();
     }

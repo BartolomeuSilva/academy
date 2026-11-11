@@ -4,6 +4,7 @@ import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/DeleteUser.vue';
+import AvatarUploader from '@/components/AvatarUploader.vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
@@ -36,8 +37,10 @@ const user = computed(() => page.props.auth.user);
         <Heading
             variant="small"
             title="Perfil"
-            description="Atualize seu nome e e-mail"
+            description="Atualize sua foto, seu nome e seu e-mail"
         />
+
+        <AvatarUploader />
 
         <Form
             v-bind="ProfileController.update.form()"

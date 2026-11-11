@@ -28,7 +28,7 @@ import VideoPlayer from '@/components/VideoPlayer.vue';
 import { useLessonProgress } from '@/composables/useLessonProgress';
 import { formatBytes, formatDuration } from '@/lib/format';
 import { edit as editLesson } from '@/routes/admin/lessons';
-import { index, show as showCourse } from '@/routes/courses';
+import { library, show as showCourse } from '@/routes/courses';
 import { show } from '@/routes/lessons';
 import type {
     LessonComments as LessonCommentsData,
@@ -71,7 +71,7 @@ defineOptions({
 
         return {
             breadcrumbs: [
-                { title: 'Meus cursos', href: index() },
+                { title: 'Meus cursos', href: library() },
                 {
                     title: props.course.title,
                     href: showCourse(props.course.slug),

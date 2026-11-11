@@ -9,8 +9,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * @phpstan-type CommentData array{id: int, body: string|null, author: string|null, created_at: string|null, edited: bool, deleted: bool, can_update: bool, can_delete: bool}
- * @phpstan-type RootCommentData array{id: int, body: string|null, author: string|null, created_at: string|null, edited: bool, deleted: bool, can_update: bool, can_delete: bool, replies: list<CommentData>}
+ * @phpstan-type CommentData array{id: int, body: string|null, author: string|null, author_avatar: string|null, created_at: string|null, edited: bool, deleted: bool, can_update: bool, can_delete: bool}
+ * @phpstan-type RootCommentData array{id: int, body: string|null, author: string|null, author_avatar: string|null, created_at: string|null, edited: bool, deleted: bool, can_update: bool, can_delete: bool, replies: list<CommentData>}
  */
 class ListLessonComments
 {
@@ -28,8 +28,8 @@ class ListLessonComments
             ->whereNull('parent_id')
             ->where(fn (Builder $query) => $query->whereNull('deleted_at')->orWhereHas('replies'))
             ->with([
-                'user:id,name',
-                'replies' => fn (HasMany $replies) => $replies->oldest('id')->with('user:id,name'),
+                'user:id,name,avatar_path',
+                'replies' => fn (HasMany $replies) => $replies->oldest('id')->with('user:id,name,avatar_path'),
             ])
             ->latest('id')
             ->limit($limit + 1)
@@ -56,6 +56,7 @@ class ListLessonComments
             'id' => $comment->id,
             'body' => $deleted ? null : $comment->body,
             'author' => $deleted ? null : $comment->user->name,
+            'author_avatar' => $deleted ? null : $comment->user->avatar,
             'created_at' => $comment->created_at?->toIso8601String(),
             'edited' => $comment->edited_at !== null,
             'deleted' => $deleted,

@@ -1,58 +1,79 @@
 <?php
 
-use App\Models\CommunityReply;
+use App\Models\CommunityMessage;
 use App\Models\CommunityReport;
 use App\Models\CommunitySpace;
-use App\Models\CommunityTopic;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
-test('a student asks, another answers, and the author is notified and marks the solution', function () {
+beforeEach(function () {
+    Storage::fake();
+});
+
+test('students chat in a channel: one asks, another replies quoting and reacts, the author is notified', function () {
     $author = User::factory()->create(['name' => 'Ana Souza']);
     $helper = User::factory()->create(['name' => 'Bruno Lima']);
     $this->actingAs($author);
 
     visit('/comunidade')
-        ->assertSee('Geral')
-        ->click('@new-topic-link')
-        ->select('@topic-space-select', (string) CommunitySpace::query()->where('slug', 'geral')->value('id'))
-        ->fill('@topic-title-input', 'Como exporto meus contatos?')
-        ->fill('@topic-body-input', 'Preciso de uma **planilha** com todos.')
-        ->click('@publish-topic-button')
-        ->assertSee('Como exporto meus contatos?')
-        ->assertSee('planilha')
+        ->assertPathIs('/comunidade/geral')
+        ->type('@message-input', 'Como exporto meus contatos?')
+        ->keys('@message-input', 'Enter')
+        ->assertSeeIn('@channel-messages', 'Como exporto meus contatos?')
         ->assertNoJavaScriptErrors();
 
-    $topic = CommunityTopic::query()->sole();
+    $question = CommunityMessage::query()->sole();
     $this->actingAs($helper);
 
-    visit("/comunidade/topicos/{$topic->id}")
-        ->fill('@reply-body-input', 'Vá em Contatos > Exportar.')
-        ->click('@send-reply-button')
-        ->assertSee('Vá em Contatos > Exportar.')
-        ->assertSee('1 resposta');
+    visit('/comunidade/geral')
+        ->hover('@chat-message')
+        ->click('@reply-message-button')
+        ->assertSeeIn('@replying-to', 'Ana Souza')
+        ->type('@message-input', 'Vá em Contatos › Exportar.')
+        ->click('@send-message-button')
+        ->assertSeeIn('@quoted-message', 'Como exporto meus contatos?')
+        ->click("#mensagem-{$question->id} [data-test=\"add-reaction-button\"]")
+        ->click('[aria-label="Reagir com 🙏"]')
+        ->assertSeeIn('@reaction-chip', '1')
+        ->assertNoJavaScriptErrors();
+
+    expect(CommunityMessage::query()->latest('id')->first()->reply_to_id)->toBe($question->id)
+        ->and($question->reactions()->count())->toBe(1);
 
     $this->actingAs($author);
 
-    visit('/comunidade')
+    visit('/comunidade/geral')
         ->assertSeeIn('@notification-count', '1')
         ->click('@notification-bell')
         ->assertSee('Bruno Lima')
         ->click('@notification-item')
-        ->assertPathIs("/comunidade/topicos/{$topic->id}")
-        ->click('@toggle-solution-button')
-        ->assertSee('Resposta que resolveu')
-        ->assertMissing('@notification-count')
-        ->assertNoJavaScriptErrors();
-
-    expect($topic->refresh()->solution_reply_id)->toBe(CommunityReply::query()->sole()->id);
+        ->assertPathIs('/comunidade/geral')
+        ->assertSee('Vá em Contatos › Exportar.')
+        ->assertMissing('@notification-count');
 });
 
-test('a reported reply reaches the team, who removes it', function () {
-    $reply = CommunityReply::factory()->create(['body' => 'Compre seguidores baratos!']);
+test('students read announcements but only the team writes there', function () {
+    $announcements = CommunitySpace::query()->where('slug', 'avisos')->sole();
+    CommunityMessage::factory()->for($announcements, 'space')->for(User::factory()->admin()->create())->create(['body' => 'Nova versão no ar!']);
     $this->actingAs(User::factory()->create());
 
-    visit("/comunidade/topicos/{$reply->topic_id}")
-        ->click('[data-test="community-reply"] [data-test="report-button"]')
+    visit('/comunidade/avisos')
+        ->assertSee('Nova versão no ar!')
+        ->assertSee('EQUIPE')
+        ->assertVisible('@staff-only-notice')
+        ->assertMissing('@message-input');
+});
+
+test('a reported message reaches the team, who removes it', function () {
+    $message = CommunityMessage::factory()
+        ->for(CommunitySpace::query()->where('slug', 'geral')->sole(), 'space')
+        ->create(['body' => 'Compre seguidores baratos!']);
+    $this->actingAs(User::factory()->create());
+
+    visit('/comunidade/geral')
+        ->hover('@chat-message')
+        ->click('@report-button')
         ->fill('#report-reason', 'Propaganda')
         ->click('@send-report-button')
         ->assertSee('Obrigado! A equipe vai analisar.');
@@ -64,41 +85,56 @@ test('a reported reply reaches the team, who removes it', function () {
         ->assertSee('Propaganda')
         ->click('@remove-reported-button')
         ->click('@confirm-dialog-button')
-        ->assertSee('Conteúdo removido.')
+        ->assertSee('Mensagem removida.')
         ->assertSee('Nenhuma denúncia aberta');
 
-    expect($reply->refresh()->trashed())->toBeTrue()
+    expect($message->refresh()->trashed())->toBeTrue()
         ->and(CommunityReport::query()->whereNull('resolved_at')->count())->toBe(0);
 });
 
-test('the team creates a space for a product and students post in it', function () {
+test('the team creates a channel for a product and switches it to team-only and back', function () {
     $this->actingAs(User::factory()->admin()->create());
 
     visit('/admin/comunidade/espacos')
-        ->fill('#new-space-name', 'ZendFlow')
-        ->fill('#new-space-description', 'Dúvidas sobre o CRM')
+        ->fill('#new-space-emoji', '📝')
+        ->fill('#new-space-name', 'TupiForm')
+        ->fill('#new-space-description', 'Dúvidas sobre formulários')
         ->click('@create-space-button')
-        ->assertSee('Espaço criado.');
+        ->assertSee('Canal criado.');
 
-    expect(CommunitySpace::query()->where('slug', 'zendflow')->sole()->staff_only)->toBeFalse();
+    $channel = CommunitySpace::query()->where('slug', 'tupiform')->sole();
+    expect($channel)->emoji->toBe('📝')->staff_only->toBeFalse();
+
+    $card = '[data-test="admin-community-space"]:has-text("TupiForm")';
+
+    visit('/admin/comunidade/espacos')
+        ->check("{$card} input[type=checkbox]")
+        ->click("{$card} button:has-text(\"Salvar\")")
+        ->assertSee('Canal atualizado.');
+    expect($channel->refresh()->staff_only)->toBeTrue();
+
+    visit('/admin/comunidade/espacos')
+        ->uncheck("{$card} input[type=checkbox]")
+        ->click("{$card} button:has-text(\"Salvar\")")
+        ->assertSee('Canal atualizado.');
+    expect($channel->refresh()->staff_only)->toBeFalse();
 
     $this->actingAs(User::factory()->create());
 
-    visit('/comunidade?espaco=zendflow')
-        ->assertSee('Dúvidas sobre o CRM')
-        ->assertVisible('@new-topic-link');
-
-    visit('/comunidade?espaco=avisos')
-        ->assertMissing('@new-topic-link');
+    visit('/comunidade/tupiform')
+        ->assertSee('Dúvidas sobre formulários')
+        ->assertVisible('@message-input');
 });
 
 test('community pages have no accessibility issues in light and dark mode', function () {
-    $student = User::factory()->create();
-    $topic = CommunityTopic::factory()->pinned()->create(['title' => 'Boas-vindas à comunidade']);
-    CommunityReply::factory()->for($topic, 'topic')->for(User::factory()->admin()->create())->create();
-    $this->actingAs($student);
+    $general = CommunitySpace::query()->where('slug', 'geral')->sole();
+    $question = CommunityMessage::factory()->for($general, 'space')->create(['body' => 'Primeira dúvida']);
+    $answer = CommunityMessage::factory()->for($general, 'space')->for(User::factory()->admin()->create())
+        ->create(['body' => 'Resposta da equipe', 'reply_to_id' => $question->id]);
+    $answer->attachImages([UploadedFile::fake()->image('print.png')]);
+    $this->actingAs(User::factory()->create());
 
-    $urls = ['/comunidade', '/comunidade/topicos/criar', "/comunidade/topicos/{$topic->id}", '/comunidade/aulas'];
+    $urls = ['/comunidade/geral', '/comunidade/avisos', '/comunidade/aulas'];
 
     visit($urls)->assertNoSmoke()->assertNoAccessibilityIssues();
 
@@ -107,40 +143,21 @@ test('community pages have no accessibility issues in light and dark mode', func
     }
 
     $this->actingAs(User::factory()->admin()->create());
-    CommunityReport::factory()->create(['reportable_id' => $topic->id]);
+    CommunityReport::factory()->create(['reportable_id' => $question->id]);
 
     visit(['/admin/comunidade/espacos', '/admin/comunidade/denuncias'])->assertNoSmoke()->assertNoAccessibilityIssues();
 });
 
-test('phones reach the community from the bottom bar', function () {
-    CommunityTopic::factory()->create(['title' => 'Dúvida no celular']);
+test('phones reach the community from the bottom bar and switch channels', function () {
+    CommunityMessage::factory()->for(CommunitySpace::query()->where('slug', 'apresente-se')->sole(), 'space')->create(['body' => 'Oi, sou a Carla!']);
     $this->actingAs(User::factory()->create());
 
     visit('/cursos')
         ->on()->mobile()
         ->click('[data-test="bottom-nav"] >> text=Comunidade')
-        ->assertPathIs('/comunidade')
-        ->assertSee('Dúvida no celular')
+        ->assertPathIs('/comunidade/geral')
+        ->click('[data-test="community-channel-link"]:has-text("Apresente-se")')
+        ->assertSee('Oi, sou a Carla!')
+        ->assertVisible('@message-input')
         ->assertNoSmoke();
-});
-
-test('the team switches a space to team-only and back', function () {
-    $space = CommunitySpace::factory()->create(['name' => 'Novidades do produto']);
-    $this->actingAs(User::factory()->admin()->create());
-
-    $card = '[data-test="admin-community-space"]:has-text("Novidades do produto")';
-
-    visit('/admin/comunidade/espacos')
-        ->check("{$card} input[type=checkbox]")
-        ->click("{$card} button:has-text(\"Salvar\")")
-        ->assertSee('Espaço atualizado.');
-
-    expect($space->refresh()->staff_only)->toBeTrue();
-
-    visit('/admin/comunidade/espacos')
-        ->uncheck("{$card} input[type=checkbox]")
-        ->click("{$card} button:has-text(\"Salvar\")")
-        ->assertSee('Espaço atualizado.');
-
-    expect($space->refresh()->staff_only)->toBeFalse();
 });

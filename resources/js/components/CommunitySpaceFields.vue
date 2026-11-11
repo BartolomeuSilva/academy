@@ -13,7 +13,21 @@ defineProps<{
 </script>
 
 <template>
-    <div class="grid gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)_6rem]">
+    <div
+        class="grid gap-3 sm:grid-cols-[5rem_minmax(0,2fr)_minmax(0,1.5fr)_6rem]"
+    >
+        <div class="grid gap-1.5">
+            <Label :for="`${idPrefix}-emoji`">Emoji</Label>
+            <Input
+                :id="`${idPrefix}-emoji`"
+                name="emoji"
+                :default-value="space?.emoji ?? ''"
+                maxlength="16"
+                placeholder="💬"
+                class="text-center"
+            />
+            <InputError :message="errors.emoji" />
+        </div>
         <div class="grid gap-1.5">
             <Label :for="`${idPrefix}-name`">Nome</Label>
             <Input
@@ -47,7 +61,7 @@ defineProps<{
             />
             <InputError :message="errors.position" />
         </div>
-        <div class="grid gap-1.5 sm:col-span-3">
+        <div class="grid gap-1.5 sm:col-span-4">
             <Label :for="`${idPrefix}-description`">Descrição</Label>
             <Input
                 :id="`${idPrefix}-description`"
@@ -57,7 +71,7 @@ defineProps<{
             />
             <InputError :message="errors.description" />
         </div>
-        <label class="flex items-center gap-2 text-sm sm:col-span-3">
+        <label class="flex items-center gap-2 text-sm sm:col-span-4">
             <input type="hidden" name="staff_only" value="0" />
             <input
                 type="checkbox"
@@ -66,7 +80,7 @@ defineProps<{
                 :checked="space?.staff_only"
                 class="size-4 accent-primary"
             />
-            Só a equipe cria tópicos (os alunos podem responder)
+            Só a equipe publica (como em Avisos)
         </label>
     </div>
 </template>

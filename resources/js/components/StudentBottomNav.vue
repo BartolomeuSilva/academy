@@ -5,7 +5,7 @@ import { useSidebar } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { useStudentNav } from '@/composables/useStudentNav';
 
-const items = useStudentNav();
+const items = useStudentNav().filter((item) => item.inBottomBar);
 const { isCurrentOrParentUrl } = useCurrentUrl();
 const { setOpenMobile } = useSidebar();
 </script>
@@ -26,7 +26,7 @@ const { setOpenMobile } = useSidebar();
                     class="flex flex-col items-center gap-0.5 py-2 text-xs text-muted-foreground aria-[current=page]:font-semibold aria-[current=page]:text-foreground"
                 >
                     <component :is="item.icon" class="size-5" />
-                    {{ item.title }}
+                    {{ item.shortTitle ?? item.title }}
                 </Link>
             </li>
             <li class="flex-1">

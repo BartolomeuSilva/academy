@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Models\CommunityMessage;
 use App\Models\CommunityReport;
-use App\Models\CommunityTopic;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -21,8 +21,8 @@ class CommunityReportFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'reportable_type' => 'community_topic',
-            'reportable_id' => CommunityTopic::factory(),
+            'reportable_type' => 'community_message',
+            'reportable_id' => CommunityMessage::factory(),
             'reason' => fake()->sentence(),
         ];
     }

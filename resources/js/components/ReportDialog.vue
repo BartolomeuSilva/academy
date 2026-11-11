@@ -21,6 +21,8 @@ defineProps<{
     /** Wayfinder form attributes of the report endpoint. */
     action: { action: string; method: 'post' };
     subject: string;
+    /** Icon-only trigger, e.g. in a message toolbar. */
+    compact?: boolean;
 }>();
 
 const open = ref(false);
@@ -31,11 +33,13 @@ const open = ref(false);
         <DialogTrigger as-child>
             <Button
                 variant="ghost"
-                size="sm"
-                class="text-muted-foreground"
+                :size="compact ? 'icon' : 'sm'"
+                :class="compact ? 'size-7' : 'text-muted-foreground'"
+                :aria-label="compact ? 'Denunciar' : undefined"
                 data-test="report-button"
             >
-                <Flag /> Denunciar
+                <Flag />
+                <template v-if="!compact">Denunciar</template>
             </Button>
         </DialogTrigger>
         <DialogContent>
@@ -49,7 +53,7 @@ const open = ref(false);
                 <DialogHeader class="space-y-3">
                     <DialogTitle>Denunciar {{ subject }}</DialogTitle>
                     <DialogDescription>
-                        A equipe vai analisar. Quem publicou não fica sabendo
+                        A equipe vai analisar. Quem escreveu não fica sabendo
                         quem denunciou.
                     </DialogDescription>
                 </DialogHeader>

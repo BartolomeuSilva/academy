@@ -4,7 +4,7 @@ import { Pencil, Reply, Trash2 } from '@lucide/vue';
 import { ref } from 'vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import InputError from '@/components/InputError.vue';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { getInitials } from '@/composables/useInitials';
@@ -37,7 +37,13 @@ function remove(close: () => void): void {
 
 <template>
     <article class="flex gap-3" data-test="comment">
-        <Avatar class="size-8 shrink-0">
+        <Avatar class="size-8 shrink-0 overflow-hidden">
+            <AvatarImage
+                v-if="comment.author_avatar"
+                :src="comment.author_avatar"
+                alt=""
+                class="object-cover"
+            />
             <AvatarFallback class="text-xs">
                 {{ comment.author ? getInitials(comment.author) : '–' }}
             </AvatarFallback>

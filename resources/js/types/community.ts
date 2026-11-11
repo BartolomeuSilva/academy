@@ -1,59 +1,33 @@
 export type CommunityAuthor = {
     name: string;
     is_team: boolean;
+    avatar?: string | null;
 };
 
-export type CommunitySpace = {
+export type CommunityChannelSummary = {
     id: number;
     name: string;
     slug: string;
+    emoji: string | null;
+    staff_only: boolean;
+};
+
+export type CommunityChannel = CommunityChannelSummary & {
     description: string | null;
-    topics_count: number;
+    messages_count: number;
     can_post: boolean;
 };
 
-export type CommunityTopicSummary = {
-    id: number;
-    title: string;
-    excerpt: string;
-    space: { name: string; slug: string };
-    author: CommunityAuthor;
-    replies_count: number;
-    solved: boolean;
-    pinned: boolean;
-    created_at: string | null;
-    last_activity_at: string;
-};
-
-export type CommunityTopicFilter = 'recentes' | 'sem-resposta' | 'meus';
-
-export type CommunityTopic = {
-    id: number;
-    title: string;
-    body: string | null;
-    body_html: string;
-    space: { id: number; name: string; slug: string };
-    author: CommunityAuthor;
-    pinned: boolean;
-    edited: boolean;
-    created_at: string | null;
-    can: {
-        update: boolean;
-        delete: boolean;
-        solve: boolean;
-        moderate: boolean;
-        report: boolean;
-    };
-};
-
-export type CommunityReply = {
+export type CommunityMessage = {
     id: number;
     body: string | null;
     body_html: string;
+    images: { id: number; url: string }[];
     author: CommunityAuthor;
     created_at: string | null;
     edited: boolean;
-    is_solution: boolean;
+    reply_to: { id: number; author: string; excerpt: string } | null;
+    reactions: { emoji: string; count: number; mine: boolean }[];
     can: { update: boolean; delete: boolean; report: boolean };
 };
 
@@ -80,10 +54,11 @@ export type AdminCommunitySpace = {
     id: number;
     name: string;
     slug: string;
+    emoji: string | null;
     description: string | null;
     staff_only: boolean;
     position: number;
-    topics_count: number;
+    messages_count: number;
 };
 
 export type AdminCommunityReport = {
@@ -92,10 +67,10 @@ export type AdminCommunityReport = {
     reporter: string;
     created_at: string | null;
     content: {
-        kind: 'topic' | 'reply';
+        id: number;
         body: string;
         author: string;
         deleted: boolean;
-        topic: { id: number; title: string } | null;
+        channel: { name: string; slug: string } | null;
     } | null;
 };

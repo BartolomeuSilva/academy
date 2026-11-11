@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Settings\AvatarController;
+use App\Http\Controllers\Settings\NotificationSettingsController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use Illuminate\Auth\Middleware\RequirePassword;
@@ -10,6 +12,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
+
+    Route::post('settings/avatar', [AvatarController::class, 'store'])->middleware('throttle:10,1')->name('avatar.store');
+    Route::delete('settings/avatar', [AvatarController::class, 'destroy'])->name('avatar.destroy');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -24,6 +29,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('user-password.update');
 
     Route::inertia('settings/appearance', 'settings/Appearance')->name('appearance.edit');
+
+    Route::get('settings/notifications', [NotificationSettingsController::class, 'edit'])->name('notification-settings.edit');
+    Route::put('settings/notifications', [NotificationSettingsController::class, 'update'])->name('notification-settings.update');
 
 });
 

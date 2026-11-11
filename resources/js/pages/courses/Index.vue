@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import { Head, Link, usePage } from '@inertiajs/vue3';
-import { CirclePlay, GraduationCap } from '@lucide/vue';
+import { ArrowRight, CirclePlay, GraduationCap } from '@lucide/vue';
 import { computed } from 'vue';
-import CourseRow from '@/components/CourseRow.vue';
+import CourseGrid from '@/components/CourseGrid.vue';
 import NextLessonCard from '@/components/NextLessonCard.vue';
 import ProgressOverview from '@/components/ProgressOverview.vue';
 import { Button } from '@/components/ui/button';
 import { formatTotalDuration } from '@/lib/format';
-import { show } from '@/routes/courses';
+import { library, show } from '@/routes/courses';
 import type { CatalogCourse, FeaturedCourse, NextLesson } from '@/types';
 
-const UNCATEGORIZED = 'Outros cursos';
+/** Courses previewed on the home page; the rest are in "Meus cursos". */
+const PREVIEWED_COURSES = 4;
 
 const props = defineProps<{
     next_lesson: NextLesson | null;
@@ -40,27 +41,16 @@ const showGreeting = computed(
     () => props.next_lesson !== null || !spotlight.value,
 );
 
-const rows = computed(() => {
-    const hasCategories = props.courses.some((course) => course.category);
-    const groups = new Map<string, CatalogCourse[]>();
-
-    for (const course of props.courses) {
-        const title = hasCategories
-            ? (course.category ?? UNCATEGORIZED)
-            : 'Todos os cursos';
-
-        groups.set(title, [...(groups.get(title) ?? []), course]);
-    }
-
-    const uncategorized = groups.get(UNCATEGORIZED);
-    groups.delete(UNCATEGORIZED);
-
-    if (uncategorized) {
-        groups.set(UNCATEGORIZED, uncategorized);
-    }
-
-    return [...groups].map(([title, courses]) => ({ title, courses }));
-});
+/** Unfinished courses first, so the preview shows what is worth opening next. */
+const previewCourses = computed(() =>
+    [...props.courses]
+        .sort(
+            (a, b) =>
+                Number(a.completed_lessons_count >= a.lessons_count) -
+                Number(b.completed_lessons_count >= b.lessons_count),
+        )
+        .slice(0, PREVIEWED_COURSES),
+);
 </script>
 
 <template>
@@ -166,12 +156,21 @@ const rows = computed(() => {
         </div>
 
         <template v-else>
-            <CourseRow
-                v-for="row in rows"
-                :key="row.title"
-                :title="row.title"
-                :courses="row.courses"
-            />
+            <section aria-labelledby="home-courses-heading" class="space-y-4">
+                <div class="flex items-center justify-between gap-2">
+                    <h2 id="home-courses-heading" class="text-lg font-semibold">
+                        Seus cursos
+                    </h2>
+                    <Link
+                        :href="library()"
+                        class="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                        data-test="all-courses-link"
+                    >
+                        Ver todos os cursos <ArrowRight class="size-4" />
+                    </Link>
+                </div>
+                <CourseGrid :courses="previewCourses" />
+            </section>
         </template>
     </div>
 </template>

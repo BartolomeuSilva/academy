@@ -121,17 +121,43 @@ function moduleDuration(module: OutlineModule): string {
                                 class="mt-0.5 size-5 shrink-0 rounded-full border-2 border-muted-foreground/40 bg-background"
                                 aria-hidden="true"
                             />
+                            <span
+                                class="relative aspect-video w-20 shrink-0 overflow-hidden rounded-md bg-muted ring-1 ring-border"
+                                aria-hidden="true"
+                            >
+                                <img
+                                    v-if="lesson.thumbnail_url"
+                                    :src="lesson.thumbnail_url"
+                                    alt=""
+                                    loading="lazy"
+                                    class="size-full object-cover"
+                                />
+                                <Play
+                                    v-else
+                                    class="absolute inset-0 m-auto size-4 text-muted-foreground"
+                                />
+                                <span
+                                    v-if="lesson.duration_seconds"
+                                    class="absolute right-1 bottom-1 rounded bg-black/75 px-1 text-[10px] leading-4 font-medium text-white tabular-nums"
+                                >
+                                    {{
+                                        formatDuration(lesson.duration_seconds)
+                                    }}
+                                </span>
+                            </span>
                             <span class="min-w-0 flex-1">
                                 <span class="text-muted-foreground tabular-nums"
                                     >{{ lessonIndex + 1 }}.</span
                                 >
                                 {{ lesson.title }}
-                            </span>
-                            <span
-                                v-if="lesson.duration_seconds"
-                                class="shrink-0 text-xs font-normal text-muted-foreground tabular-nums"
-                            >
-                                {{ formatDuration(lesson.duration_seconds) }}
+                                <span
+                                    v-if="lesson.duration_seconds"
+                                    class="sr-only"
+                                    >,
+                                    {{
+                                        formatDuration(lesson.duration_seconds)
+                                    }}</span
+                                >
                             </span>
                         </Link>
                     </li>

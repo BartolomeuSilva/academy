@@ -23,6 +23,7 @@ class CommunitySpaceFactory extends Factory
         return [
             'name' => Str::ucfirst($name),
             'slug' => Str::slug($name),
+            'emoji' => '💬',
             'description' => fake()->sentence(),
             'staff_only' => false,
             'position' => fake()->numberBetween(10, 100),
@@ -30,7 +31,7 @@ class CommunitySpaceFactory extends Factory
     }
 
     /**
-     * Indicate that only the team starts topics in the space.
+     * Indicate that only the team posts in the channel.
      */
     public function staffOnly(): static
     {

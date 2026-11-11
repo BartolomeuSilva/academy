@@ -11,19 +11,20 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
- * A community area, e.g. one per product, "Geral" or the team-only "Avisos".
+ * A community chat channel, e.g. one per product, "Geral" or the team-only "Avisos".
  *
  * @property int $id
  * @property string $name
  * @property string $slug
+ * @property string|null $emoji
  * @property string|null $description
- * @property bool $staff_only Only admins start topics here; everyone may reply.
+ * @property bool $staff_only Only the team posts here, e.g. "Avisos".
  * @property int $position
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property-read Collection<int, CommunityTopic> $topics
+ * @property-read Collection<int, CommunityMessage> $messages
  */
-#[Fillable(['name', 'slug', 'description', 'staff_only'])]
+#[Fillable(['name', 'slug', 'emoji', 'description', 'staff_only'])]
 class CommunitySpace extends Model
 {
     /** @use HasFactory<CommunitySpaceFactory> */
@@ -43,10 +44,10 @@ class CommunitySpace extends Model
     }
 
     /**
-     * @return HasMany<CommunityTopic, $this>
+     * @return HasMany<CommunityMessage, $this>
      */
-    public function topics(): HasMany
+    public function messages(): HasMany
     {
-        return $this->hasMany(CommunityTopic::class, 'space_id');
+        return $this->hasMany(CommunityMessage::class, 'space_id');
     }
 }

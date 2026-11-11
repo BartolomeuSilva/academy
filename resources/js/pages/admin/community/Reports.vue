@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatDateTime } from '@/lib/format';
 import { destroy, index, update } from '@/routes/admin/community/reports';
-import { show as showTopic } from '@/routes/community/topics';
+import { show as showChannel } from '@/routes/community/channels';
 import type { AdminCommunityReport, Paginated } from '@/types';
 
 defineProps<{
@@ -60,9 +60,9 @@ function removeContent(report: AdminCommunityReport, close: () => void): void {
                 <p
                     class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground"
                 >
-                    <Badge variant="secondary">{{
-                        report.content?.kind === 'topic' ? 'Tópico' : 'Resposta'
-                    }}</Badge>
+                    <Badge v-if="report.content?.channel" variant="secondary"
+                        >#{{ report.content.channel.name }}</Badge
+                    >
                     <span
                         >Denunciado por
                         <span class="font-medium text-foreground">{{
@@ -90,11 +90,17 @@ function removeContent(report: AdminCommunityReport, close: () => void): void {
                 </blockquote>
                 <div class="flex flex-wrap items-center gap-2">
                     <Link
-                        v-if="report.content?.topic && !report.content.deleted"
-                        :href="showTopic(report.content.topic.id)"
+                        v-if="
+                            report.content?.channel && !report.content.deleted
+                        "
+                        :href="
+                            showChannel(report.content.channel.slug, {
+                                query: { mensagem: report.content.id },
+                            })
+                        "
                         class="mr-auto text-sm underline underline-offset-4"
                     >
-                        Ver “{{ report.content.topic.title }}”
+                        Ver na conversa
                     </Link>
                     <Button
                         variant="outline"
@@ -106,7 +112,7 @@ function removeContent(report: AdminCommunityReport, close: () => void): void {
                     </Button>
                     <ConfirmDialog
                         title="Remover este conteúdo?"
-                        description="O conteúdo sai da comunidade e todas as denúncias sobre ele são fechadas."
+                        description="A mensagem sai da comunidade e todas as denúncias sobre ela são fechadas."
                         confirm-label="Remover"
                         @confirm="(close) => removeContent(report, close)"
                     >
@@ -115,7 +121,7 @@ function removeContent(report: AdminCommunityReport, close: () => void): void {
                             size="sm"
                             data-test="remove-reported-button"
                         >
-                            <Trash2 /> Remover conteúdo
+                            <Trash2 /> Remover mensagem
                         </Button>
                     </ConfirmDialog>
                 </div>

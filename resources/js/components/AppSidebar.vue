@@ -49,7 +49,7 @@ const adminNavItems = computed<NavItem[]>(() =>
                   icon: MessageSquare,
               },
               {
-                  title: 'Espaços da comunidade',
+                  title: 'Canais da comunidade',
                   href: adminSpaces(),
                   icon: MessagesSquare,
               },

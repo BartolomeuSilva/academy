@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 /**
- * A student's report of a topic or reply for the team to review.
+ * A student's report of a community message for the team to review.
  *
  * @property int $id
  * @property int $user_id
@@ -23,7 +23,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  * @property-read User $user
- * @property-read CommunityTopic|CommunityReply|null $reportable
+ * @property-read CommunityMessage|null $reportable
  */
 #[Fillable(['reason'])]
 class CommunityReport extends Model
@@ -52,7 +52,7 @@ class CommunityReport extends Model
     }
 
     /**
-     * The reported topic or reply, including soft-deleted ones.
+     * The reported message, including deleted ones.
      *
      * @return MorphTo<Model, $this>
      */

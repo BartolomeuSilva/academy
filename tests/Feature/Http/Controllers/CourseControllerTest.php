@@ -197,3 +197,20 @@ test('guests and unverified users can not open the catalog', function () {
         ->get(route('courses.index'))
         ->assertRedirect(route('verification.notice'));
 });
+
+test('my courses lists the catalog with the student progress', function () {
+    $student = User::factory()->create();
+    $course = Course::factory()->published()->create(['title' => 'Vendas']);
+    $lesson = visibleLesson(Module::factory()->for($course)->create());
+    LessonProgress::factory()->completed()->for($student)->for($lesson)->create();
+    Course::factory()->create(['title' => 'Rascunho']);
+
+    $this->actingAs($student)
+        ->get(route('courses.library'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('courses/Library')
+            ->has('courses', 1)
+            ->where('courses.0.title', 'Vendas')
+            ->where('courses.0.completed_lessons_count', 1)
+            ->where('courses.0.started', true));
+});

@@ -17,19 +17,19 @@ defineOptions({
     layout: {
         breadcrumbs: [
             { title: 'Comunidade', href: index() },
-            { title: 'Discussões das aulas', href: lessons() },
+            { title: 'Dúvidas das aulas', href: lessons() },
         ],
     },
 });
 </script>
 
 <template>
-    <Head title="Discussões das aulas" />
+    <Head title="Dúvidas das aulas" />
 
     <div class="flex max-w-4xl flex-1 flex-col gap-6 p-4">
         <header class="space-y-1">
             <h1 class="text-2xl font-semibold tracking-tight">
-                Discussões das aulas
+                Dúvidas das aulas
             </h1>
             <p class="text-muted-foreground">
                 As dúvidas e comentários mais recentes de todas as aulas.

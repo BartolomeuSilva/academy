@@ -38,6 +38,7 @@ export type OutlineLesson = {
     slug: string;
     title: string;
     duration_seconds: number | null;
+    thumbnail_url: string | null;
     completed: boolean;
 };
 
@@ -87,6 +88,7 @@ export type LessonComment = {
     id: number;
     body: string | null;
     author: string | null;
+    author_avatar: string | null;
     created_at: string | null;
     edited: boolean;
     deleted: boolean;
@@ -113,4 +115,19 @@ export type LessonRatingSummary = {
     average: number | null;
     count: number;
     mine: { stars: number; feedback: string | null } | null;
+};
+
+export type Achievement = {
+    key: string;
+    title: string;
+    description: string;
+    target: number;
+    progress: number;
+    earned: boolean;
+};
+
+export type AchievementGroup = {
+    key: 'lessons' | 'courses' | 'ratings' | 'messages' | 'reactions';
+    title: string;
+    achievements: Achievement[];
 };

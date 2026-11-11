@@ -2,15 +2,15 @@
 
 namespace Database\Factories;
 
-use App\Models\CommunityReply;
-use App\Models\CommunityTopic;
+use App\Models\CommunityMessage;
+use App\Models\CommunitySpace;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<CommunityReply>
+ * @extends Factory<CommunityMessage>
  */
-class CommunityReplyFactory extends Factory
+class CommunityMessageFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -20,9 +20,9 @@ class CommunityReplyFactory extends Factory
     public function definition(): array
     {
         return [
-            'topic_id' => CommunityTopic::factory(),
+            'space_id' => CommunitySpace::factory(),
             'user_id' => User::factory(),
-            'body' => fake()->paragraph(),
+            'body' => fake()->sentence(12),
         ];
     }
 }

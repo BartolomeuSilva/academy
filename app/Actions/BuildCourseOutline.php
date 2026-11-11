@@ -10,7 +10,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * @phpstan-type OutlineLesson array{id: int, slug: string, title: string, duration_seconds: int|null, completed: bool}
+ * @phpstan-type OutlineLesson array{id: int, slug: string, title: string, duration_seconds: int|null, thumbnail_url: string|null, completed: bool}
  * @phpstan-type OutlineModule array{id: int, title: string, lessons: list<OutlineLesson>}
  * @phpstan-type Outline array{modules: list<OutlineModule>, lessons: list<OutlineLesson>, completed_count: int, resume: array{lesson: OutlineLesson, started: bool}|null}
  */
@@ -26,7 +26,7 @@ class BuildCourseOutline
         $modules = $course->modules()
             ->with(['lessons' => fn (HasMany $lessons) => $lessons
                 ->visibleTo($user)
-                ->with('video:id,duration_seconds')
+                ->with('video:id,duration_seconds,poster_path')
                 ->select(['id', 'module_id', 'video_id', 'slug', 'title', 'position']),
             ])
             ->get(['id', 'course_id', 'title', 'position'])
@@ -46,6 +46,7 @@ class BuildCourseOutline
                 'slug' => $lesson->slug,
                 'title' => $lesson->title,
                 'duration_seconds' => $lesson->video?->duration_seconds,
+                'thumbnail_url' => $lesson->video?->posterUrl(),
                 'completed' => (bool) $progress->get($lesson->id)?->isCompleted(),
             ])->all()),
         ])->all());

@@ -2,21 +2,18 @@
 
 namespace App\Http\Requests\Community;
 
-use App\Models\CommunityReply;
+use App\Models\CommunityMessage;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-/**
- * Validates a new reply or an edit of one; who may edit is checked by the controller.
- */
-class ReplyRequest extends FormRequest
+class UpdateMessageRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->can('update', $this->route('message')) ?? false;
     }
 
     /**
@@ -27,7 +24,7 @@ class ReplyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'body' => ['required', 'string', 'max:'.CommunityReply::MAX_BODY_LENGTH],
+            'body' => ['required', 'string', 'max:'.CommunityMessage::MAX_BODY_LENGTH],
         ];
     }
 
@@ -38,6 +35,6 @@ class ReplyRequest extends FormRequest
      */
     public function attributes(): array
     {
-        return ['body' => 'resposta'];
+        return ['body' => 'mensagem'];
     }
 }

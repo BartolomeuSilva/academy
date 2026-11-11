@@ -20,7 +20,7 @@ test('the platform starts in the light theme even when the device prefers dark',
 
 test('the settings pages have no accessibility issues in light and dark mode', function () {
     $this->actingAs(User::factory()->create());
-    $urls = ['/settings/profile', '/settings/security', '/settings/appearance'];
+    $urls = ['/settings/profile', '/settings/security', '/settings/appearance', '/settings/notifications'];
 
     visit($urls)->assertNoSmoke()->assertNoAccessibilityIssues();
 

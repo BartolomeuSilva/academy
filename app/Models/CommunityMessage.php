@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasCommunityImages;
 use Carbon\CarbonImmutable;
-use Database\Factories\CommunityTopicFactory;
+use Database\Factories\CommunityMessageFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,33 +16,35 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 /**
+ * A chat message in a community channel, optionally replying to another one.
+ *
  * @property int $id
  * @property int $space_id
  * @property int $user_id
- * @property string $title
+ * @property int|null $reply_to_id
  * @property string $body
- * @property int|null $solution_reply_id
- * @property CarbonImmutable|null $pinned_at
  * @property CarbonImmutable|null $edited_at
- * @property CarbonImmutable $last_activity_at
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  * @property CarbonImmutable|null $deleted_at
  * @property-read CommunitySpace $space
  * @property-read User $user
- * @property-read CommunityReply|null $solution
- * @property-read Collection<int, CommunityReply> $replies
- * @property-read int|null $replies_count
+ * @property-read CommunityMessage|null $replyTo
+ * @property-read Collection<int, CommunityReaction> $reactions
+ * @property-read Collection<int, CommunityImage> $images
  */
-#[Fillable(['title', 'body'])]
-class CommunityTopic extends Model
+#[Fillable(['body'])]
+class CommunityMessage extends Model
 {
-    /** @use HasFactory<CommunityTopicFactory> */
-    use HasFactory, SoftDeletes;
+    /** @use HasFactory<CommunityMessageFactory> */
+    use HasCommunityImages, HasFactory, SoftDeletes;
 
-    public const int MAX_TITLE_LENGTH = 160;
+    public const int MAX_BODY_LENGTH = 3000;
 
-    public const int MAX_BODY_LENGTH = 5000;
+    /**
+     * Emojis students react with.
+     */
+    public const array REACTIONS = ['👍', '❤️', '😂', '🎉', '🙏', '👀'];
 
     /**
      * Get the attributes that should be cast.
@@ -51,9 +54,7 @@ class CommunityTopic extends Model
     protected function casts(): array
     {
         return [
-            'pinned_at' => 'datetime',
             'edited_at' => 'datetime',
-            'last_activity_at' => 'datetime',
         ];
     }
 
@@ -74,21 +75,21 @@ class CommunityTopic extends Model
     }
 
     /**
-     * @return HasMany<CommunityReply, $this>
+     * The message this one quotes, if it was not deleted.
+     *
+     * @return BelongsTo<CommunityMessage, $this>
      */
-    public function replies(): HasMany
+    public function replyTo(): BelongsTo
     {
-        return $this->hasMany(CommunityReply::class, 'topic_id');
+        return $this->belongsTo(CommunityMessage::class, 'reply_to_id');
     }
 
     /**
-     * The reply the author or the team marked as the answer.
-     *
-     * @return BelongsTo<CommunityReply, $this>
+     * @return HasMany<CommunityReaction, $this>
      */
-    public function solution(): BelongsTo
+    public function reactions(): HasMany
     {
-        return $this->belongsTo(CommunityReply::class, 'solution_reply_id');
+        return $this->hasMany(CommunityReaction::class, 'message_id');
     }
 
     /**
@@ -105,5 +106,13 @@ class CommunityTopic extends Model
     public function bodyHtml(): string
     {
         return Str::markdown($this->body, ['html_input' => 'escape', 'allow_unsafe_links' => false]);
+    }
+
+    /**
+     * The body as plain text, e.g. to quote it.
+     */
+    public function excerpt(int $limit = 160): string
+    {
+        return Str::limit(Str::squish(strip_tags($this->bodyHtml())), $limit);
     }
 }
